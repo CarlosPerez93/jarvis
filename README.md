@@ -1,29 +1,46 @@
-# 👏 Jarvis - Double Clap Home Automation
+# 🦾 Jarvis 2.0 - Asistente Conversacional IA
 
-Aplaude 2 veces y Jarvis te da la bienvenida, pone música y abre tus apps.
+> **Nota Histórica:** Esta es la **Versión 2.0** del proyecto. Este repositorio parte originalmente de la versión 1.0 creada por **Rafa Tatay**, la cual era un script lineal diseñado para macOS que ejecutaba acciones rígidas tras detectar dos aplausos. En esta versión 2.0, el proyecto ha sido reescrito desde cero utilizando **Arquitectura Limpia (SOLID)** para Windows, integrando un motor LLM conversacional (Gemini), reconocimiento de voz continuo y ejecución dinámica de herramientas.
 
 ## ¿Qué hace?
-1. Detecta 2 aplausos por el micrófono
-2. Una voz dice **"Bienvenido a casa, señor Tatay"**
-3. Abre YouTube con tu canción
-4. Abre **Claude** y **Cursor** lado a lado
+Jarvis es un asistente de escritorio "User-in-the-loop" que:
+1. **Espera en silencio:** Detecta 2 aplausos a través del micrófono para despertar.
+2. **Interactúa por Voz:** Te saluda y te escucha usando tu micrófono (`SpeechRecognition`).
+3. **Piensa con Inteligencia Artificial:** Procesa tu comando usando **Gemini 2.5 Flash** para entender tu intención real (no responde a comandos rígidos, podés hablarle natural).
+4. **Ejecuta Herramientas (Function Calling):** Si le pedís que abra tu entorno de trabajo (Claude + Cursor) o que ponga música, Gemini "llama" a la herramienta correspondiente en Python.
+5. **Confirma antes de actuar:** Jarvis te pregunta en voz alta si confirmás la acción antes de tocar algo en tu sistema.
+
+## Arquitectura
+El proyecto fue refactorizado siguiendo principios SOLID:
+- `src/main.py`: Punto de entrada y loop de detección de audio de bajo nivel.
+- `src/core/`: Componentes atómicos (Cerebro LLM, Orejas STT, Boca TTS).
+- `src/tools/`: Herramientas de sistema inyectables en Gemini.
 
 ## Instalación
 
-```bash
-pip install sounddevice numpy pyttsx3 pygetwindow
-```
+1. **Clonar y crear el entorno:**
+   ```bash
+   git clone https://github.com/CarlosPerez93/jarvis.git
+   cd jarvis
+   python -m venv .venv
+   source .venv/Scripts/activate
+   ```
+
+2. **Instalar dependencias:**
+   ```bash
+   pip install SpeechRecognition pyaudio google-genai google-generativeai python-dotenv numpy sounddevice pyttsx3 pywin32 pygetwindow
+   ```
+
+3. **Configurar la API Key:**
+   - Renombrá el archivo `.env.example` a `.env`.
+   - Pegá tu API Key de Google AI Studio (`GEMINI_API_KEY=tu_clave_aca`).
 
 ## Uso
 
+Asegurate de tener el entorno virtual activado y ejecutá:
+
 ```bash
-python bienvenido_jarvis.py
+python -m src.main
 ```
 
-> Si no detecta los aplausos, ajusta `THRESHOLD` en el script (sube el valor si hay ruido, bájalo si no detecta).
-
-## Requisitos
-- Windows 10/11
-- Python 3.9+
-- Micrófono
-- Claude y Cursor instalados
+> **Tip:** Si el entorno es muy ruidoso y se activa solo, ajustá la constante `THRESHOLD` en `src/main.py` a un número más alto (ej: `0.30`). Si tenés que aplaudir muy fuerte para que te escuche, bajalo a `0.10`.
