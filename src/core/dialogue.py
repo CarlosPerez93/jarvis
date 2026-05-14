@@ -46,8 +46,13 @@ class DialogueManager:
                     
                     # Invocamos la función real en Python
                     if func_name in self.tools_map:
-                        result_msg = self.tools_map[func_name]()
-                        self.tts.speak(result_msg)
+                        kwargs = {k: v for k, v in tool_call.args.items()} if hasattr(tool_call, "args") else {}
+                        try:
+                            result_msg = self.tools_map[func_name](**kwargs)
+                            self.tts.speak(result_msg)
+                        except Exception as e:
+                            print(f"Error interno al ejecutar {func_name}: {e}")
+                            self.tts.speak("Ocurrió un error al intentar abrir el programa.")
                     else:
                         self.tts.speak("Lo siento, esa herramienta no existe en mi base de datos.")
                 else:

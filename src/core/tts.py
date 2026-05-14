@@ -1,37 +1,48 @@
-import pyttsx3
-import pythoncom
+import os
+import asyncio
+# pyrefly: ignore [missing-import]
+import edge_tts
+# pyrefly: ignore [missing-import]
+import pygame
 
 class TTSProvider:
     def __init__(self) -> None:
-        pass
+        # Inicializamos el mixer de audio de pygame
+        pygame.mixer.init()
 
     def speak(self, text: str) -> None:
-        # 1. Imprimir la respuesta
+        # 1. Imprimir la respuesta en consola
         print(f"  🔊  Jarvis: «{text}»")
         
-        # 2. Limpiar Markdown (asteriscos, numerales, etc) que confunden al motor de Windows
+        # 2. Limpiar Markdown para no confundir al motor TTS
         clean_text = text.replace("*", "").replace("#", "").replace("_", "").replace("`", "").strip()
         
-        # 3. Inicializar el motor on-the-fly para esquivar el infame bug de 'runAndWait' de pyttsx3
+        # 3. Generar y reproducir el audio con voces neuronales
         try:
-            # Requisito para inicializar un motor COM en algunos entornos
-            pythoncom.CoInitialize() 
+            temp_file = "temp_voice.mp3"
             
-            engine = pyttsx3.init()
+            # Función asíncrona para generar el archivo mp3
+            async def _generate_audio():
+                # Usamos a Elvira (voz femenina natural de España)
+                communicate = edge_tts.Communicate(clean_text, "es-ES-ElviraNeural", rate="+5%")
+                await communicate.save(temp_file)
+                
+            # Ejecutamos la generación de forma bloqueante
+            asyncio.run(_generate_audio())
             
-            # Buscar voz en español
-            voices = engine.getProperty("voices")
-            esp = [v for v in voices if "es" in v.id.lower() or "spanish" in v.name.lower()]
-            if esp:
-                engine.setProperty("voice", esp[0].id)
-            engine.setProperty("rate", 148)
+            # Cargamos y reproducimos el mp3
+            pygame.mixer.music.load(temp_file)
+            pygame.mixer.music.play()
             
-            # Hablar
-            engine.say(clean_text)
-            engine.runAndWait()
+            # Esperamos a que termine de hablar
+            while pygame.mixer.music.get_busy():
+                pygame.time.Clock().tick(10)
+                
+            # Liberamos el archivo para poder borrarlo
+            pygame.mixer.music.unload()
             
-            # Limpiar memoria del motor COM para la próxima vez
-            del engine
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
             
         except Exception as e:
-            print(f"  ❌  Error del parlante (SAPI5): {e}")
+            print(f"  ❌  Error del parlante neuronal: {e}")

@@ -67,5 +67,18 @@ def reproducir_musica() -> str:
     webbrowser.open(youtube_url)
     return "Música reproduciéndose en YouTube."
 
+def abrir_programa(nombre_programa: str) -> str:
+    """
+    Abre cualquier programa del sistema por su nombre o ejecutable (ej: winword, excel, chrome, calc, notepad).
+    Usa esta herramienta cuando el usuario pida abrir una aplicación que no sea el entorno de trabajo por defecto.
+    """
+    print(f"  💻  Ejecutando: abrir_programa({nombre_programa})...")
+    try:
+        # En Windows, el comando 'start' lanza programas si están en el PATH o registrados
+        subprocess.run(["cmd", "/c", "start", nombre_programa], check=True)
+        return f"Programa {nombre_programa} abierto correctamente."
+    except Exception as e:
+        return f"Error al intentar abrir el programa {nombre_programa}: {e}"
+
 # Lista de herramientas para inyectar en Gemini
-TOOLS_LIST = [abrir_entorno_trabajo, reproducir_musica]
+TOOLS_LIST = [abrir_entorno_trabajo, reproducir_musica, abrir_programa]
