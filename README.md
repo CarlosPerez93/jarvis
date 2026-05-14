@@ -33,7 +33,8 @@ El proyecto fue refactorizado siguiendo principios SOLID:
 
 3. **Configurar la API Key:**
    - Renombrá el archivo `.env.example` a `.env`.
-   - Pegá tu API Key de Google AI Studio (`GEMINI_API_KEY=tu_clave_aca`).
+   - Pegá tu API Key principal de Google AI Studio (`GEMINI_API_KEY=tu_clave_aca`).
+   - *(Opcional)* Si agotás tus peticiones, podés agregar más claves de respaldo como `GEMINI_API_KEY_1`, `GEMINI_API_KEY_2`. Jarvis saltará automáticamente entre modelos y claves si se queda sin tokens, manteniendo el historial de la charla.
 
 ## Uso
 
