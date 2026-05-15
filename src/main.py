@@ -11,7 +11,8 @@ def main():
 
     try:
         dialogue_manager = DialogueManager()
-        wakeword = WakeWordDetector(sensitivity=0.5)
+        # El detector se crea una sola vez con baja sensibilidad para mics débiles
+        wakeword = WakeWordDetector(sensitivity=0.25, device_index=1)
     except Exception as e:
         print(f"\n  ❌  Error de inicialización: {e}")
         sys.exit(1)
@@ -21,17 +22,22 @@ def main():
 
     try:
         while True:
-            # Esperar por el wakeword "Hey Jarvis"
+            # 1. Esperar por el wakeword
             detected = wakeword.listen_for_wakeword()
 
             if detected:
-                print("\n\n  🚀  ¡Wakeword detectado!")
                 try:
+                    # 2. Soltamos el mic inmediatamente para el diálogo
+                    wakeword.stop_stream()
+                    
+                    # 3. Corremos la interacción
                     dialogue_manager.run_interaction()
+                    
                 except Exception as e:
-                    print(f"  ❌  Error de sistema: {e}")
+                    print(f"  ❌  Error durante la interacción: {e}")
                 finally:
-                    time.sleep(0.5)
+                    # 4. Volvemos a modo escucha (start_stream se llama dentro de listen_for_wakeword)
+                    time.sleep(0.3)
                     print("\n  👂  Volviendo a modo espera...\n")
 
     except KeyboardInterrupt:

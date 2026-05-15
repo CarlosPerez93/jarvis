@@ -4,14 +4,15 @@ import speech_recognition as sr
 class AudioListener:
     def __init__(self) -> None:
         self.recognizer = sr.Recognizer()
-        # Puedes jugar con estos valores si el ambiente es ruidoso
-        self.recognizer.energy_threshold = 300
+        # Bajamos el umbral para que sea más sensible al habla normal
+        self.recognizer.energy_threshold = 200
         self.recognizer.dynamic_energy_threshold = True
 
         print("  🎤  Inicializando micrófono y ajustando ruido ambiente...")
-        self.microphone = sr.Microphone()
+        # Forzamos el ID 1 que es el micrófono real detectado
+        self.microphone = sr.Microphone(device_index=1)
         with self.microphone as source:
-            self.recognizer.adjust_for_ambient_noise(source, duration=1.5)
+            self.recognizer.adjust_for_ambient_noise(source, duration=1.0)
         print("  ✅  Micrófono listo.")
 
     def listen(self, timeout: int = 5, phrase_time_limit: int = 15) -> str | None:

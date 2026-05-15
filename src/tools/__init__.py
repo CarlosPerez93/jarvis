@@ -1,6 +1,5 @@
 """
 Registro central de todas las herramientas inyectables en Gemini.
-Cada herramienta es una función Python con docstring que Gemini usa para decidir cuándo invocarla.
 """
 from src.tools.system_tools import (
     abrir_entorno_trabajo,
@@ -14,6 +13,7 @@ from src.tools.system_tools import (
 from src.tools.info_tools import (
     obtener_hora,
     obtener_clima,
+    investigar_en_internet,
 )
 
 # Lista maestra de herramientas para inyectar en Gemini
@@ -30,4 +30,5 @@ TOOLS_LIST = [
     # Información
     obtener_hora,
     obtener_clima,
+    investigar_en_internet, # <--- Nueva herramienta de búsqueda
 ]

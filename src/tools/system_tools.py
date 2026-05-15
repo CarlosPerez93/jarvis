@@ -36,6 +36,7 @@ def abrir_entorno_trabajo() -> str:
     time.sleep(2.0)
 
     try:
+        # pyrefly: ignore [missing-import]
         import pygetwindow as gw
 
         claude_windows = gw.getWindowsWithTitle('Claude')
@@ -91,6 +92,7 @@ def subir_volumen() -> str:
     try:
         from ctypes import cast, POINTER
         from comtypes import CLSCTX_ALL
+        # pyrefly: ignore [missing-import]
         from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
         devices = AudioUtilities.GetSpeakers()
@@ -115,6 +117,7 @@ def bajar_volumen() -> str:
     try:
         from ctypes import cast, POINTER
         from comtypes import CLSCTX_ALL
+        # pyrefly: ignore [missing-import]
         from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
         devices = AudioUtilities.GetSpeakers()
@@ -139,6 +142,7 @@ def establecer_volumen(porcentaje: int) -> str:
     try:
         from ctypes import cast, POINTER
         from comtypes import CLSCTX_ALL
+        # pyrefly: ignore [missing-import]
         from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
         devices = AudioUtilities.GetSpeakers()
@@ -162,6 +166,7 @@ def silenciar_volumen() -> str:
     try:
         from ctypes import cast, POINTER
         from comtypes import CLSCTX_ALL
+        # pyrefly: ignore [missing-import]
         from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
         devices = AudioUtilities.GetSpeakers()
