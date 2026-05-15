@@ -1,11 +1,10 @@
 import os
-# pyrefly: ignore [missing-import]
-import google.generativeai as genai
-# pyrefly: ignore [missing-import]
+from google import genai
 from dotenv import load_dotenv
 
-load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-for m in genai.list_models():
-    if "generateContent" in m.supported_generation_methods:
-        print(m.name)
+# Cargar variables desde el archivo .env en el directorio del script
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
+
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+for m in client.models.list():
+    print(m.name)
