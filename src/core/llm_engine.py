@@ -29,7 +29,8 @@ class LLMEngine:
         print(f"  🔑  Sistema de llaves listo: {len(self.api_keys)} llaves cargadas.")
         
         self.current_key_idx = 0
-        self.models_cascade = ["gemini-2.0-flash", "gemini-1.5-flash"]
+        # 2. Modelos de respaldo en cascada (Nombres reales de 2026)
+        self.models_cascade = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"]
         self.current_model_idx = 0
         
         self.system_instruction = (
