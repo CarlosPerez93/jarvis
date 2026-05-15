@@ -1,5 +1,6 @@
 import os
 from google import genai
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,10 +11,10 @@ def list_my_models():
     
     print("--- MODELOS DISPONIBLES EN TU CUENTA ---")
     try:
-        # Imprimimos todo lo que nos devuelva para ver la estructura
-        models = client.models.list()
-        for m in models:
-            print(f"Name: {m.name}")
+        # Listamos los modelos soportados para generar contenido
+        for model in client.models.list():
+            if "generateContent" in model.supported_generation_methods:
+                print(f"ID: {model.name} (DisplayName: {model.display_name})")
     except Exception as e:
         print(f"Error al listar modelos: {e}")
 
