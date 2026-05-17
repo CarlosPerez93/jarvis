@@ -1,10 +1,12 @@
 import numpy as np
 import pyaudio
+from collections import deque
 from openwakeword.model import Model
+from src.core.voice_auth import VoiceAuthenticator
 
 
 class WakeWordDetector:
-    """Detector de wakeword con ganancia extrema para micrófonos de bajo volumen."""
+    """Detector de wakeword con ganancia extrema para micrófonos de bajo volumen y validación biométrica de voz."""
 
     def __init__(self, sensitivity: float = 0.15, device_index: int = 1) -> None:
         self.sensitivity = sensitivity
@@ -17,6 +19,15 @@ class WakeWordDetector:
 
         self.audio = pyaudio.PyAudio()
         self.stream = None
+        
+        # Inicializar el autenticador biométrico de voz
+        self.authenticator = VoiceAuthenticator()
+        
+        # Buffer circular para guardar los últimos 2 segundos de audio
+        # A 16kHz, 2 segundos son 32000 muestras. Cada chunk es de 1280 muestras.
+        # 32000 / 1280 = 25 chunks exactos.
+        self.audio_buffer = deque(maxlen=25)
+        
         print(f"  ✅  Calibrado para volumen bajo (Umbral: {self.sensitivity})")
 
     def start_stream(self):
@@ -46,6 +57,10 @@ class WakeWordDetector:
         self.start_stream()
         if not self.stream: return False
 
+        # Si el modelo no estaba cargado, intentamos recargarlo por si el usuario enroló su voz en caliente
+        if not self.authenticator.is_trained:
+            self.authenticator.load_model()
+
         print("  👂  Escuchando... (Hablale normal a la laptop)")
         try:
             while True:
@@ -54,6 +69,9 @@ class WakeWordDetector:
 
                 # GANANCIA EXTREMA (x15.0) para compensar el mic Intel
                 audio_array = np.clip(audio_array.astype(np.float32) * 15.0, -32768, 32767).astype(np.int16)
+
+                # Guardamos el audio con ganancia en el buffer circular
+                self.audio_buffer.append(audio_array)
 
                 # Procesar
                 self.model.predict(audio_array)
@@ -68,8 +86,25 @@ class WakeWordDetector:
 
                     if current_score > self.sensitivity:
                         print(f"\n  🚀  ¡DETECTADO! (Score: {current_score:.2f})")
-                        self.model.reset()
-                        return True
+                        
+                        # Extraer el audio acumulado de los últimos 2 segundos
+                        if len(self.audio_buffer) > 0:
+                            triggered_audio = np.concatenate(list(self.audio_buffer))
+                            
+                            # Validar firma biométrica vocal
+                            if self.authenticator.verify_speaker(triggered_audio):
+                                self.model.reset()
+                                self.audio_buffer.clear()
+                                return True
+                            else:
+                                # Si no coincide, ignoramos y seguimos escuchando en el loop
+                                self.model.reset()
+                                self.audio_buffer.clear()
+                                print("  👂  Escuchando... (Hablale normal a la laptop)")
+                        else:
+                            # Por seguridad, si el buffer circular está vacío, permitimos pasar
+                            self.model.reset()
+                            return True
         except KeyboardInterrupt:
             return False
 
@@ -77,3 +112,4 @@ class WakeWordDetector:
         self.stop_stream()
         if self.audio:
             self.audio.terminate()
+
