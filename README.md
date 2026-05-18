@@ -1,6 +1,11 @@
-# 🦾 Jarvis 3.0 - Asistente Conversacional IA
+# 🦾 Jarvis 3.1 - Asistente Conversacional IA
 
-> **Nota Histórica:** Esta es la **Versión 3.0** del proyecto. Este repositorio parte originalmente de la versión 1.0 creada por **Rafa Tatay**, la cual era un script lineal diseñado para macOS que ejecutaba acciones rígidas tras detectar dos aplausos. En la versión 2.0, el proyecto fue reescrito usando Arquitectura Limpia para Windows. En esta versión 3.0, se migró a la nueva SDK de Google (`google-genai`), se reemplazaron los aplausos por un wakeword inteligente ("Hey Jarvis"), y se agregaron herramientas nuevas de control del sistema.
+> **Nota Histórica y Evolución:** El proyecto sigue un ciclo de desarrollo iterativo registrado minuciosamente. Parte de la v1.0 creada por **Rafa Tatay** (macOS, aplausos) y ha evolucionado bajo una arquitectura robusta:
+> - **v1.0 (Registro [v1](file:///c:/Projects/jarvis/registros_ia/implementation_plans/v1_migracion_windows_tts_y_tools.md)):** Migración inicial a Windows y Clean Architecture (SOLID), reemplazando la rigidez original por un flujo de diálogo dinámico y TTS de red neuronal.
+> - **v2.0 (Registro [v2](file:///c:/Projects/jarvis/registros_ia/implementation_plans/v2_fallback_de_agentes.md)):** Resiliencia multicapa. Integración de fallback inteligente a voces locales y rotación de modelos si falla internet o la API.
+> - **v3.0 (Registro [v3](file:///c:/Projects/jarvis/registros_ia/implementation_plans/v3_jarvis_3_evolucion_mayor.md)):** **Evolución Mayor**. Migración completa a la nueva SDK `google-genai`, reemplazo de aplausos por wakeword "Hey Jarvis" 100% local (openWakeWord) y Google Search integrado.
+> - **v3.1 (Registro [v4](file:///c:/Projects/jarvis/registros_ia/implementation_plans/v4_pauta_silencio_inteligente.md) - Actual):** **Oído Inteligente**. Implementación de "Pauta de Silencio Inteligente" con umbral dinámico de espera (2.0s por defecto) y remoción de límites de tiempo para permitir la elaboración de ideas complejas sin cortes.
+
 
 ## ¿Qué hace?
 Jarvis es un asistente de escritorio con voz neural que:
@@ -16,6 +21,8 @@ Jarvis es un asistente de escritorio con voz neural que:
 - **Oído Biónico:** Ganancia de audio optimizada (x15.0) mediante procesamiento de señales en tiempo real, permitiendo que Jarvis te escuche perfecto incluso con micrófonos integrados de bajo volumen.
 - **Voz Híbrida Inteligente:** Utiliza voces neurales de alta calidad (`Edge-TTS`) con un sistema de fallback automático a voces locales (`SAPI5/pyttsx3`) si se pierde la conexión a internet.
 - **Investigación Autónoma:** Herramienta de búsqueda web mejorada que gestiona sus propias cuotas y llaves para garantizar que siempre tengas información actualizada.
+- **Pauta de Silencio Inteligente:** Umbral de silencio dinámico (`AUDIO_PAUSE_THRESHOLD` de 2.0s por defecto) y límite de frase ajustable (`AUDIO_PHRASE_TIME_LIMIT` libre), garantizando que Jarvis no te corte a mitad de una idea compleja y espere pacientemente a que termines.
+
 
 ## Herramientas disponibles
 | Herramienta | Descripción | Ejemplo de voz |
@@ -56,6 +63,8 @@ El proyecto sigue principios SOLID con arquitectura limpia:
    - Renombrá el archivo `.env.example` a `.env`.
    - Pegá tu API Key principal de Google AI Studio (`GEMINI_API_KEY=tu_clave_aca`).
    - Jarvis soporta múltiples llaves para evitar límites de cuota: `GEMINI_API_KEY_1`, `GEMINI_API_KEY_2`, etc.
+   - **Personalizar el Oído:** Podés configurar cómo te escucha Jarvis mediante `AUDIO_PAUSE_THRESHOLD=2.0` (tiempo en segundos para esperar silencio antes de cortar) y `AUDIO_PHRASE_TIME_LIMIT=None` (máxima duración de la frase grabada).
+
 
 ## Uso
 
@@ -70,4 +79,5 @@ Cuando Jarvis arranque, simplemente decí **"Hey Jarvis"** y hablale naturalment
 > **Tip:** Jarvis está optimizado para escucharte de lejos gracias al boost de ganancia. Si sentís que se activa solo por ruidos de fondo, podés subir la sensibilidad en el `.env` o en `main.py`.
 
 ---
-*Jarvis 3.0 - Desarrollado con pasión para una automatización total.*
+*Jarvis 3.1 - Desarrollado con pasión para una automatización total.*
+

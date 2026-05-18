@@ -38,8 +38,8 @@ class DialogueManager:
         while continuar_charla:
             # 2. Escuchar comando
             print("  👂  Escuchando...")
-            # En modo diálogo somos más estrictos con el silencio para no quedarnos pegados
-            user_text = self.audio.listen(timeout=5, phrase_time_limit=10)
+            # Dejamos que el AudioListener maneje los límites dinámicamente desde el .env
+            user_text = self.audio.listen(timeout=5)
             
             if not user_text:
                 print("  🤫  Silencio detectado. Volviendo a modo espera.")
