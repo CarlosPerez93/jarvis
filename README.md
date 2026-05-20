@@ -73,6 +73,26 @@ Asegurate de tener el entorno virtual activado y ejecutá:
 ```bash
 python -m src.main
 ```
+## Biometría Vocal
+
+Para usar la biometría de voz, primero **entrená tu firma vocal**:
+
+```bash
+python enrolar.py
+```
+
+Esto generará un modelo entrenado en `registros_ia/voice_auth` (ejemplo).
+
+Luego, podés probar la configuración con:
+
+```bash
+python probar_biometria.py
+```
+
+El script mostrará la probabilidad de coincidencia y te indicará si el acceso está autorizado. Podés ajustar el umbral en el archivo `.env` mediante la variable `AUDIO_AUTH_THRESHOLD`.
+
+**Iniciar la biometría al arrancar Jarvis**
+Añadí la siguiente línea al final de `src/main.py` o configurá la variable de entorno `START_BIOMETRY=True` para que el proceso de autenticación se ejecute automáticamente al iniciar el asistente.
 
 Cuando Jarvis arranque, simplemente decí **"Hey Jarvis"** y hablale naturalmente.
 

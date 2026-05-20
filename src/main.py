@@ -12,7 +12,7 @@ def main():
     try:
         dialogue_manager = DialogueManager()
         # El detector se crea una sola vez con baja sensibilidad para mics débiles
-        wakeword = WakeWordDetector(sensitivity=0.1, device_index=1)
+        wakeword = WakeWordDetector(sensitivity=0.05, device_index=1)
     except Exception as e:
         print(f"\n  ❌  Error de inicialización: {e}")
         sys.exit(1)
