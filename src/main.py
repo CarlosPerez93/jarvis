@@ -1,24 +1,47 @@
 import sys
+import io
+
+# Force stdout and stderr to use UTF-8 on Windows to prevent charmap codec errors
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True, write_through=True)
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True, write_through=True)
+
 import time
 from src.core.dialogue import DialogueManager
 from src.core.wakeword import WakeWordDetector
+from src.core.ui_bridge import init_eel, start_ui, update_status
 
 
 def main():
     print("=" * 60)
-    print("  🦾  JARVIS 3.0 INICIALIZANDO SISTEMAS...")
+    print("  JARVIS 3.0 INICIALIZANDO SISTEMAS...")
     print("=" * 60)
 
     try:
+        # Initialize UI first (non‑blocking)
+        init_eel()
+        start_ui()
+        # Initialize core components
         dialogue_manager = DialogueManager()
         # El detector se crea una sola vez con baja sensibilidad para mics débiles
         wakeword = WakeWordDetector(sensitivity=0.1, device_index=1, tts=dialogue_manager.tts)
     except Exception as e:
-        print(f"\n  ❌  Error de inicialización: {e}")
+        print(f"\n  [ERROR] Error de inicialización: {e}")
         sys.exit(1)
 
-    print("\n  🎤  Sistemas online. Di 'Hey Jarvis' para activarme. (Ctrl+C para salir)")
+    print("\n  [MIC]  Sistemas online. Di 'Hey Jarvis' para activarme. (Ctrl+C para salir)")
     print("-" * 60)
+
+    # Notify UI that backend is ready and push system details to footer
+    from src.core.ui_bridge import update_footer
+    try:
+        update_status("READY", "#00ff00")
+        update_footer("status", "READY")
+        update_footer("model", "gemini-2.5-flash")
+        update_footer("key", "Key #1")
+        update_footer("auth", "BIOMETRICS ON" if wakeword.authenticator.is_trained else "BYPASS MODE")
+    except Exception:
+        pass
 
     try:
         while True:
@@ -29,19 +52,19 @@ def main():
                 try:
                     # 2. Soltamos el mic inmediatamente para el diálogo
                     wakeword.stop_stream()
-                    
+
                     # 3. Corremos la interacción
                     dialogue_manager.run_interaction()
-                    
+
                 except Exception as e:
-                    print(f"  ❌  Error durante la interacción: {e}")
+                    print(f"  [ERROR] Error durante la interacción: {e}")
                 finally:
                     # 4. Volvemos a modo escucha (start_stream se llama dentro de listen_for_wakeword)
                     time.sleep(0.3)
-                    print("\n  👂  Volviendo a modo espera...\n")
+                    print("\n  [INFO]  Volviendo a modo espera...\n")
 
     except KeyboardInterrupt:
-        print("\n\n  Desconectando sistemas. Hasta luego, señor Carlos. 👋")
+        print("\n\n  Desconectando sistemas. Hasta luego, señor Carlos. [BYE]")
         wakeword.cleanup()
         sys.exit(0)
 

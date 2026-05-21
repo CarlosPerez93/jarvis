@@ -3,6 +3,7 @@ import pyaudio
 from collections import deque
 from openwakeword.model import Model
 from src.core.voice_auth import VoiceAuthenticator
+from src.core.ui_bridge import update_waveform, update_biometrics
 
 
 class WakeWordDetector:
@@ -14,8 +15,13 @@ class WakeWordDetector:
         self.sample_rate = 16000
         self.chunk_size = 1280 
 
-        print(f"  🧠  Cargando modelos... (Mic ID: {self.device_index})")
-        self.model = Model(wakeword_models=["jarvis"], inference_framework="onnx")
+        print(f"[LOAD] Cargando modelos... (Mic ID: {self.device_index})")
+        try:
+            from openwakeword.utils import download_models
+            download_models()
+        except Exception as e:
+            print(f"  [WARN]  Failed to download wake word models: {e}")
+        self.model = Model(wakeword_models=["hey_jarvis"], inference_framework="onnx")
 
         self.audio = pyaudio.PyAudio()
         self.stream = None
@@ -64,6 +70,10 @@ class WakeWordDetector:
         print("  👂  Escuchando... (Hablale normal a la laptop)")
         try:
             while True:
+                # Ceder cooperativamente el control a Gevent/Eel
+                import eel
+                eel.sleep(0.005)
+
                 audio_data = self.stream.read(self.chunk_size, exception_on_overflow=False)
                 audio_array = np.frombuffer(audio_data, dtype=np.int16)
 
@@ -72,6 +82,14 @@ class WakeWordDetector:
 
                 # Guardamos el audio con ganancia en el buffer circular
                 self.audio_buffer.append(audio_array)
+
+                # PUSH WAVEFORM TO UI (downsample and map to [0, 255])
+                try:
+                    downsampled = audio_array[::20]
+                    normalized = (((downsampled.astype(np.float32) / 32768.0) + 1.0) * 127.5).astype(np.int32).tolist()
+                    update_waveform(normalized)
+                except Exception:
+                    pass
 
                 # Procesar
                 self.model.predict(audio_array)
@@ -82,10 +100,14 @@ class WakeWordDetector:
                     
                     # Ver el score en tiempo real si hay algo de ruido
                     if current_score > 0.05:
-                        print(f"  📊  Nivel de coincidencia: {current_score:.2f} (Objetivo: {self.sensitivity})   ", end='\r')
+                        print(f"  [PROGRESS] Nivel de coincidencia: {current_score:.2f} (Objetivo: {self.sensitivity})   ", end='\r')
+                        try:
+                            update_biometrics(current_score, self.sensitivity)
+                        except Exception:
+                            pass
 
                     if current_score > self.sensitivity:
-                        print(f"\n  🚀  ¡DETECTADO! (Score: {current_score:.2f})")
+                        print(f"\n  [DETECTED] ¡DETECTADO! (Score: {current_score:.2f})")
                         
                         # Extraer el audio acumulado de los últimos 2 segundos
                         if len(self.audio_buffer) > 0:

@@ -17,6 +17,7 @@ class LLMEngine:
         self.api_keys = []
         
         # Cargar llaves del .env
+        # Removed erroneous UI_DIR definition
         base_key = os.getenv("GEMINI_API_KEY")
         if base_key: self.api_keys.append(base_key.strip())
         for i in range(1, 10):
@@ -26,7 +27,7 @@ class LLMEngine:
         if not self.api_keys:
             raise ValueError("No se encontraron API Keys en el .env")
             
-        print(f"  🔑  Sistema de llaves listo: {len(self.api_keys)} llaves cargadas.")
+        print(f"  [KEY]  Sistema de llaves listo: {len(self.api_keys)} llaves cargadas.")
         
         self.current_key_idx = 0
         # 2. Modelos de respaldo en cascada (Nombres reales de 2026)
@@ -55,9 +56,9 @@ class LLMEngine:
                     tools=self.tools_list
                 )
             )
-            print(f"  🧠  Cerebro conectado: {model} (Llave #{self.current_key_idx + 1})")
+            print(f"  [BRAIN] Cerebro conectado: {model} (Llave #{self.current_key_idx + 1})")
         except Exception as e:
-            print(f"  ❌  Error al inicializar cliente: {e}")
+            print(f"  [ERROR] Error al inicializar cliente: {e}")
 
     def _rotate_fallback(self) -> bool:
         """Prueba la siguiente llave. Si no hay más, prueba el siguiente modelo."""
@@ -85,6 +86,10 @@ class LLMEngine:
                 if response.function_calls:
                     tool_calls = list(response.function_calls)
                 
+                # If both text and tool calls are empty, provide a fallback message
+                if not response.text and not tool_calls:
+                    return "[INFO] No response generated. Por favor, intentá de nuevo.", []
+                
                 return (response.text or "").strip(), tool_calls
                 
             except Exception as e:
@@ -92,12 +97,12 @@ class LLMEngine:
                 intentos += 1
                 
                 # Rotar llave ante cualquier error (cuota, formato, expiración, inválida, etc.)
-                print(f"  ⚠️  Llave #{self.current_key_idx + 1} falló: {e}. Rotando...")
+                print(f"  [WARN]  Llave #{self.current_key_idx + 1} falló: {e}. Rotando...")
                 if self._rotate_fallback():
                     time.sleep(1) # Esperar un segundo para no saturar
                     continue
                 
-                print(f"  ❌  Error en comunicación: {e}")
+                print(f"  [FAIL]  Error en comunicación: {e}")
                 return "Tuve un problema al procesar eso. ¿Podés repetir?", []
         
         return "Lo siento Carlos, todas mis redes neuronales están saturadas ahora mismo.", []

@@ -3,6 +3,7 @@ import pickle
 import random
 import numpy as np
 from sklearn.svm import SVC
+from src.core.ui_bridge import update_biometrics
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "voice_model.pkl")
 
@@ -145,6 +146,12 @@ class VoiceAuthenticator:
             
             print(f"  📊  [BIOMETRÍA] Probabilidad de Carlos: {user_prob:.4f} (Umbral: {self.threshold})")
             
+            # PUSH TO UI
+            try:
+                update_biometrics(user_prob, self.threshold)
+            except Exception:
+                pass
+                
             if prediction == 1 and user_prob >= self.threshold:
                 print("  ✅  [BIOMETRÍA] Usuario AUTENTICADO correctamente.")
                 return True

@@ -6,6 +6,7 @@ from .tts import TTSProvider
 from .llm_engine import LLMEngine
 from src.tools import TOOLS_LIST
 from src.tools.system.session import ExitSession
+from src.core.ui_bridge import update_status, add_chat_message
 
 
 class DialogueManager:
@@ -40,6 +41,14 @@ class DialogueManager:
         # 1. Saludo inicial (solo la primera vez)
         print("  📢  Saludando...")
         greeting = random.choice(self._greetings)
+        
+        # PUSH TO UI: SPEAKING status and chat message
+        try:
+            update_status("SPEAKING", "#00ffff")
+            add_chat_message("Jarvis", greeting)
+        except Exception:
+            pass
+            
         self.tts.speak(greeting)
 
         continuar_charla = True
@@ -48,6 +57,12 @@ class DialogueManager:
         while continuar_charla:
             # 2. Escuchar comando
             print("  👂  Escuchando...")
+            # PUSH TO UI: LISTENING status
+            try:
+                update_status("LISTENING", "#ffaa00")
+            except Exception:
+                pass
+                
             # Dejamos que el AudioListener maneje los límites dinámicamente desde el .env
             user_text = self.audio.listen(timeout=5)
             
@@ -58,12 +73,25 @@ class DialogueManager:
                 continuar_charla = False
                 continue
 
+            # PUSH TO UI: User's chat message and PROCESSING status
+            try:
+                add_chat_message("Carlos", user_text)
+                update_status("PROCESSING", "#a000ff")
+            except Exception:
+                pass
+
             # 3. Pensar
             print(f"  🧠  Procesando: «{user_text}»")
             text_response, tool_calls = self.llm.send_message(user_text)
 
             # 4. Responder texto
             if text_response:
+                # PUSH TO UI: SPEAKING status and chat message
+                try:
+                    update_status("SPEAKING", "#00ffff")
+                    add_chat_message("Jarvis", text_response)
+                except Exception:
+                    pass
                 print(f"  🗣️  Jarvis: {text_response}")
                 self.tts.speak(text_response)
 
@@ -75,14 +103,31 @@ class DialogueManager:
                     if func_name in self.tools_map:
                         kwargs = dict(tool_call.args) if hasattr(tool_call, "args") and tool_call.args else {}
                         try:
+                            # PUSH TO UI: SYSTEM log/chat message
+                            try:
+                                add_chat_message("System", f"Ejecutando herramienta {func_name}...")
+                            except Exception:
+                                pass
                             print(f"  ⚙️  Llamando a {func_name}...")
                             result_msg = self.tools_map[func_name](**kwargs)
                             # Si no hubo respuesta de texto previa, decimos el resultado de la herramienta
                             if not text_response:
+                                # PUSH TO UI: SPEAKING status and chat message
+                                try:
+                                    update_status("SPEAKING", "#00ffff")
+                                    add_chat_message("Jarvis", result_msg)
+                                except Exception:
+                                    pass
                                 self.tts.speak(result_msg)
                         except ExitSession as e:
                             # Decir adiós y cerrar el proceso
                             exit_msg = str(e)
+                            # PUSH TO UI: SPEAKING status and chat message
+                            try:
+                                update_status("SPEAKING", "#00ffff")
+                                add_chat_message("Jarvis", exit_msg)
+                            except Exception:
+                                pass
                             self.tts.speak(exit_msg)
                             time.sleep(1.0) # Esperar a que termine de hablar
                             sys.exit(0)
@@ -105,4 +150,16 @@ class DialogueManager:
         # Si la interacción termina y no hubo una respuesta de despedida del LLM, Jarvis dice algo amable
         if not text_response:
             goodbye = random.choice(self._goodbyes)
+            # PUSH TO UI: SPEAKING status and chat message
+            try:
+                update_status("SPEAKING", "#00ffff")
+                add_chat_message("Jarvis", goodbye)
+            except Exception:
+                pass
             self.tts.speak(goodbye)
+
+        # Volvemos a modo READY
+        try:
+            update_status("READY", "#00ff00")
+        except Exception:
+            pass
