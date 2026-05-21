@@ -11,6 +11,9 @@ from .system.session import finalizar_sesion
 # Herramientas de Información
 from .info_tools import obtener_hora, obtener_clima, investigar_en_internet
 
+# Herramientas de Navegación (GPS)
+from .navigation import buscar_en_mapa, trazar_ruta
+
 # Lista maestra de herramientas para inyectar en Gemini
 TOOLS_LIST = [
     # Aplicaciones y Procesos
@@ -38,4 +41,8 @@ TOOLS_LIST = [
     obtener_hora,
     obtener_clima,
     investigar_en_internet,
+    
+    # Navegación y Mapas
+    buscar_en_mapa,
+    trazar_ruta,
 ]
