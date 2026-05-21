@@ -15,7 +15,7 @@ class TTSProvider:
         
         # Inicializar el motor local de Windows por si falla el neural
         self.local_engine = pyttsx3.init()
-        self.local_engine.setProperty('rate', 180) # Velocidad natural
+        self.local_engine.setProperty('rate', 148) # Velocidad natural a 148 wpm
 
     def speak(self, text: str) -> None:
         """Sintetiza y reproduce texto. Si falla la red, usa voz local."""

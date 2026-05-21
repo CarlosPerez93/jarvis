@@ -1,5 +1,6 @@
 import os
 import pickle
+import random
 import numpy as np
 from sklearn.svm import SVC
 
@@ -88,11 +89,25 @@ def extract_features(audio_data: np.ndarray, sample_rate: int = 16000) -> np.nda
 class VoiceAuthenticator:
     """Maneja la carga del modelo de firma vocal y la validación en tiempo real."""
     
-    def __init__(self, threshold: float = 0.85) -> None:
-        self.threshold = threshold
+    def __init__(self, threshold: float = None, tts=None) -> None:
+        if threshold is None:
+            from dotenv import load_dotenv
+            load_dotenv()
+            self.threshold = float(os.getenv("AUDIO_AUTH_THRESHOLD", "0.85"))
+        else:
+            self.threshold = threshold
         self.model = None
         self.is_trained = False
+        self.tts = tts
         self.load_model()
+        
+        # Mensajes naturales de rechazo
+        self._rejection_messages = [
+            "Che, esa no parece tu voz. Acceso denegado.",
+            "No te reconocí la firma de voz, Carlos. Acceso denegado.",
+            "Perdón, pero no me suena tu voz. No te puedo dar acceso.",
+            "Acceso denegado. Tu firma de voz no coincide con la registrada.",
+        ]
         
     def load_model(self) -> None:
         """Carga el modelo guardado si existe."""
@@ -134,7 +149,10 @@ class VoiceAuthenticator:
                 print("  ✅  [BIOMETRÍA] Usuario AUTENTICADO correctamente.")
                 return True
             else:
-                print("  ❌  [BIOMETRÍA] Acceso DENEGADO: La firma de voz no coincide.")
+                msg = random.choice(self._rejection_messages)
+                print(f"  ❌  [BIOMETRÍA] Acceso DENEGADO: {msg}")
+                if self.tts:
+                    self.tts.speak(msg)
                 return False
         except Exception as e:
             print(f"  ⚠️  [BIOMETRÍA] Error durante la predicción: {e}. Acceso denegado por seguridad.")

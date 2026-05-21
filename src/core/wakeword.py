@@ -8,7 +8,7 @@ from src.core.voice_auth import VoiceAuthenticator
 class WakeWordDetector:
     """Detector de wakeword con ganancia extrema para micrófonos de bajo volumen y validación biométrica de voz."""
 
-    def __init__(self, sensitivity: float = 0.15, device_index: int = 1) -> None:
+    def __init__(self, sensitivity: float = 0.15, device_index: int = 1, tts=None) -> None:
         self.sensitivity = sensitivity
         self.device_index = device_index
         self.sample_rate = 16000
@@ -21,7 +21,7 @@ class WakeWordDetector:
         self.stream = None
         
         # Inicializar el autenticador biométrico de voz
-        self.authenticator = VoiceAuthenticator()
+        self.authenticator = VoiceAuthenticator(tts=tts)
         
         # Buffer circular para guardar los últimos 2 segundos de audio
         # A 16kHz, 2 segundos son 32000 muestras. Cada chunk es de 1280 muestras.
