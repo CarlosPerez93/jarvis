@@ -15,7 +15,7 @@ class WakeWordDetector:
         self.chunk_size = 1280 
 
         print(f"  🧠  Cargando modelos... (Mic ID: {self.device_index})")
-        self.model = Model(wakeword_models=["hey_jarvis"], inference_framework="onnx")
+        self.model = Model(wakeword_models=["jarvis"], inference_framework="onnx")
 
         self.audio = pyaudio.PyAudio()
         self.stream = None

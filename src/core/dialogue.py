@@ -1,9 +1,11 @@
 import random
+import sys
 import time
 from .audio import AudioListener
 from .tts import TTSProvider
 from .llm_engine import LLMEngine
 from src.tools import TOOLS_LIST
+from src.tools.system.session import ExitSession
 
 
 class DialogueManager:
@@ -15,15 +17,22 @@ class DialogueManager:
         # Mapear nombres de las funciones a sus objetos en memoria
         self.tools_map = {tool.__name__: tool for tool in TOOLS_LIST}
 
-        # Saludos variados
+        # Saludos variados en tono profesional colombiano paisa
         self._greetings = [
-            "¿Qué necesitás?",
-            "Acá estoy. ¿En qué te ayudo?",
-            "Te escucho.",
-            "A tus órdenes. ¿Qué hacemos?",
-            "Presente. ¿Qué se te ofrece?",
-            "Dime.",
-            "Si.",
+            "¿En qué le puedo colaborar, señor Carlos?",
+            "A sus órdenes, Carlos. ¿Qué hacemos hoy?",
+            "Adelante, lo escucho.",
+            "¿Qué se le ofrece, señor Carlos?",
+            "Sí, señor Carlos, dígame.",
+            "Aquí estoy, a su servicio.",
+        ]
+
+        # Despedidas variadas en tono profesional colombiano paisa
+        self._goodbyes = [
+            "Hasta luego, señor Carlos. Que esté muy bien.",
+            "Con gusto, señor Carlos. Quedo muy atento.",
+            "Hasta pronto. Que tenga un excelente día.",
+            "Que le vaya muy bien, señor Carlos. Hasta la próxima.",
         ]
 
     def run_interaction(self) -> None:
@@ -34,6 +43,7 @@ class DialogueManager:
         self.tts.speak(greeting)
 
         continuar_charla = True
+        text_response = None
         
         while continuar_charla:
             # 2. Escuchar comando
@@ -70,6 +80,12 @@ class DialogueManager:
                             # Si no hubo respuesta de texto previa, decimos el resultado de la herramienta
                             if not text_response:
                                 self.tts.speak(result_msg)
+                        except ExitSession as e:
+                            # Decir adiós y cerrar el proceso
+                            exit_msg = str(e)
+                            self.tts.speak(exit_msg)
+                            time.sleep(1.0) # Esperar a que termine de hablar
+                            sys.exit(0)
                         except Exception as e:
                             print(f"  ❌  Error en herramienta {func_name}: {e}")
                             self.tts.speak("Tuve un problema al realizar esa acción.")
@@ -85,3 +101,8 @@ class DialogueManager:
                 
             print("  ⏳  Esperando por si tenés algo más que decir...")
             # Pequeña pausa visual
+
+        # Si la interacción termina y no hubo una respuesta de despedida del LLM, Jarvis dice algo amable
+        if not text_response:
+            goodbye = random.choice(self._goodbyes)
+            self.tts.speak(goodbye)

@@ -50,7 +50,7 @@ class TTSProvider:
             temp_file = f"temp_voice_{self._temp_counter % 2}.mp3"
 
             async def _generate_audio():
-                communicate = edge_tts.Communicate(text, "es-ES-ElviraNeural", rate="+15%")
+                communicate = edge_tts.Communicate(text, "es-CO-GonzaloNeural", rate="+0%")
                 await communicate.save(temp_file)
 
             asyncio.run(_generate_audio())

@@ -34,8 +34,8 @@ class LLMEngine:
         self.current_model_idx = 0
         
         self.system_instruction = (
-            "Eres Jarvis, asistente de Carlos. Respondé en español rioplatense (voseo). "
-            "Eres eficiente, culto y amable. Usá las herramientas para controlar la PC. "
+            "Eres Jarvis, asistente de Carlos. Responde siempre en español con acento y modismos de Colombia (tono ejecutivo paisa profesional, natural y amable). "
+            "Eres eficiente, culto y respetuoso. Usa las herramientas para controlar la PC. "
             "Si el usuario pide información que no tienes, usa 'investigar_en_internet'."
         )
         
@@ -91,12 +91,11 @@ class LLMEngine:
                 err = str(e).lower()
                 intentos += 1
                 
-                # Si es un error de cuota o servicio, rotar y reintentar
-                if any(x in err for x in ["429", "resource", "quota", "503", "unavailable", "expired", "invalid"]):
-                    print(f"  ⚠️  Llave #{self.current_key_idx + 1} agotada o con error. Rotando...")
-                    if self._rotate_fallback():
-                        time.sleep(1) # Esperar un segundo para no saturar
-                        continue
+                # Rotar llave ante cualquier error (cuota, formato, expiración, inválida, etc.)
+                print(f"  ⚠️  Llave #{self.current_key_idx + 1} falló: {e}. Rotando...")
+                if self._rotate_fallback():
+                    time.sleep(1) # Esperar un segundo para no saturar
+                    continue
                 
                 print(f"  ❌  Error en comunicación: {e}")
                 return "Tuve un problema al procesar eso. ¿Podés repetir?", []

@@ -101,12 +101,12 @@ class VoiceAuthenticator:
         self.tts = tts
         self.load_model()
         
-        # Mensajes naturales de rechazo
+        # Mensajes naturales de rechazo en tono profesional colombiano paisa
         self._rejection_messages = [
-            "Che, esa no parece tu voz. Acceso denegado.",
-            "No te reconocí la firma de voz, Carlos. Acceso denegado.",
-            "Perdón, pero no me suena tu voz. No te puedo dar acceso.",
-            "Acceso denegado. Tu firma de voz no coincide con la registrada.",
+            "Lo siento, pero esa no parece ser su firma de voz. Acceso denegado.",
+            "No logré reconocer su voz, señor Carlos. No puedo permitirle el acceso.",
+            "Disculpe, pero su firma de voz no coincide con la del señor Carlos.",
+            "Acceso denegado. La firma de voz no corresponde con la autorizada.",
         ]
         
     def load_model(self) -> None:
