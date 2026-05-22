@@ -2,161 +2,63 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>J.A.R.V.I.S. 4.0</title>
+    <meta name="description" content="J.A.R.V.I.S. 4.0 — Neural Interface">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Fullscreen Canvas — Orb + Particles -->
+    <canvas id="orb-canvas"></canvas>
+
     <!-- Boot Overlay -->
-    <div id="boot-overlay" class="boot-overlay active">
-        <div class="boot-content">
-            <div class="boot-logo">J.A.R.V.I.S.</div>
-            <div class="boot-version">v4.0 — HOLOGRAPHIC INTERFACE</div>
-            <div class="boot-progress-bar">
-                <div class="boot-progress-fill" id="boot-progress"></div>
-            </div>
+    <div id="boot-overlay" class="boot-overlay">
+        <div class="boot-text">
+            <div class="boot-logo" id="boot-logo">J.A.R.V.I.S.</div>
+            <div class="boot-version">v4.0 — NEURAL INTERFACE</div>
             <div class="boot-log" id="boot-log"></div>
         </div>
     </div>
 
-    <!-- Particle Canvas (Background) -->
-    <canvas id="particles-canvas"></canvas>
+    <!-- Clock (top right) -->
+    <div class="header-clock" id="header-clock">00:00:00</div>
 
-    <!-- Main HUD Container -->
-    <div id="hud" class="hud hidden">
-        <!-- Header Bar -->
-        <header class="hud-header">
-            <div class="header-left">
-                <span class="header-title">J.A.R.V.I.S.</span>
-                <span class="header-version">4.0</span>
-                <span class="header-divider">|</span>
-                <span class="header-subtitle">HOLOGRAPHIC INTERFACE</span>
-            </div>
-            <div class="header-right">
-                <span class="header-date" id="header-date"></span>
-                <span class="header-clock" id="header-clock">00:00:00</span>
-            </div>
-        </header>
-
-        <!-- Main Content Area -->
-        <main class="hud-main">
-            <!-- Left Panel — Arc Reactor -->
-            <section class="panel-reactor">
-                <!-- Decorative Corner Lines -->
-                <div class="corner-decor top-left"></div>
-                <div class="corner-decor top-right"></div>
-                <div class="corner-decor bottom-left"></div>
-                <div class="corner-decor bottom-right"></div>
-
-                <!-- Arc Reactor -->
-                <div class="reactor-container" id="reactor-container">
-                    <div class="reactor-ring ring-outer"></div>
-                    <div class="reactor-ring ring-middle"></div>
-                    <div class="reactor-ring ring-inner"></div>
-                    <div class="reactor-ring ring-segments">
-                        <div class="segment"></div>
-                        <div class="segment"></div>
-                        <div class="segment"></div>
-                        <div class="segment"></div>
-                        <div class="segment"></div>
-                        <div class="segment"></div>
-                        <div class="segment"></div>
-                        <div class="segment"></div>
-                    </div>
-                    <div class="reactor-core">
-                        <div class="core-glow"></div>
-                        <div class="core-center"></div>
-                    </div>
-                    <!-- Orbiting dots -->
-                    <div class="orbit-track orbit-1">
-                        <div class="orbit-dot"></div>
-                    </div>
-                    <div class="orbit-track orbit-2">
-                        <div class="orbit-dot"></div>
-                    </div>
-                    <div class="orbit-track orbit-3">
-                        <div class="orbit-dot"></div>
-                    </div>
-                </div>
-
-                <!-- Status Label under reactor -->
-                <div class="reactor-status">
-                    <div class="status-indicator" id="status-dot"></div>
-                    <span class="status-text" id="status-text">INITIALIZING</span>
-                </div>
-
-                <!-- Biometrics Mini Panel -->
-                <div class="biometrics-panel" id="biometrics-panel">
-                    <div class="bio-header">
-                        <span class="bio-icon">🔒</span>
-                        <span class="bio-title">BIOMETRICS</span>
-                    </div>
-                    <div class="bio-bar-container">
-                        <div class="bio-bar-fill" id="bio-bar-fill"></div>
-                    </div>
-                    <div class="bio-data">
-                        <span id="bio-score">0.00</span>
-                        <span class="bio-separator">/</span>
-                        <span id="bio-threshold">0.85</span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Right Panel — Chat Log -->
-            <section class="panel-chat">
-                <div class="chat-header">
-                    <div class="chat-header-left">
-                        <span class="chat-icon">◉</span>
-                        <span class="chat-title">COMMUNICATION LOG</span>
-                    </div>
-                    <div class="chat-header-line"></div>
-                </div>
-                <div class="chat-messages" id="chat-messages">
-                    <!-- Messages will be injected here -->
-                </div>
-            </section>
-        </main>
-
-        <!-- Audio Waveform Bar -->
-        <section class="waveform-section">
-            <div class="waveform-label">
-                <span class="waveform-icon">◈</span>
-                <span>AUDIO ANALYSIS</span>
-            </div>
-            <canvas id="waveform-canvas"></canvas>
-        </section>
-
-        <!-- Footer Status Bar -->
-        <footer class="hud-footer">
-            <div class="footer-item">
-                <span class="footer-label">STATUS</span>
-                <span class="footer-value" id="footer-status">BOOTING</span>
-            </div>
-            <div class="footer-divider"></div>
-            <div class="footer-item">
-                <span class="footer-label">MODEL</span>
-                <span class="footer-value" id="footer-model">—</span>
-            </div>
-            <div class="footer-divider"></div>
-            <div class="footer-item">
-                <span class="footer-label">KEY</span>
-                <span class="footer-value" id="footer-key">—</span>
-            </div>
-            <div class="footer-divider"></div>
-            <div class="footer-item">
-                <span class="footer-label">AUTH</span>
-                <span class="footer-value" id="footer-auth">—</span>
-            </div>
-            <div class="footer-divider"></div>
-            <div class="footer-item system-log">
-                <span class="footer-label">LOG</span>
-                <span class="footer-value log-text" id="footer-log">Starting systems...</span>
-            </div>
-        </footer>
+    <!-- Status Indicator (below orb) -->
+    <div id="status-area" class="status-area hidden">
+        <div class="status-indicator" id="status-dot"></div>
+        <span class="status-text" id="status-text">INITIALIZING</span>
     </div>
+
+    <!-- Footer Status Bar -->
+    <footer id="hud-footer" class="hud-footer hidden">
+        <div class="footer-item">
+            <span class="footer-label">STATUS</span>
+            <span class="footer-value" id="footer-status">BOOTING</span>
+        </div>
+        <div class="footer-divider"></div>
+        <div class="footer-item">
+            <span class="footer-label">MODEL</span>
+            <span class="footer-value" id="footer-model">—</span>
+        </div>
+        <div class="footer-divider"></div>
+        <div class="footer-item">
+            <span class="footer-label">KEY</span>
+            <span class="footer-value" id="footer-key">—</span>
+        </div>
+        <div class="footer-divider"></div>
+        <div class="footer-item">
+            <span class="footer-label">AUTH</span>
+            <span class="footer-value" id="footer-auth">—</span>
+        </div>
+        <div class="footer-divider"></div>
+        <div class="footer-item system-log">
+            <span class="footer-label">LOG</span>
+            <span class="footer-value log-text" id="footer-log">Starting systems...</span>
+        </div>
+    </footer>
 
     <script type="text/javascript" src="/eel.js"></script>
     <script src="app.js"></script>
