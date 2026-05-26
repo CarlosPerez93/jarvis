@@ -1,11 +1,12 @@
-# 🦾 Jarvis 3.2 - Asistente Conversacional IA
+# 🦾 Jarvis 4.0 - Asistente Conversacional IA
 
 > **Nota Histórica y Evolución:** El proyecto sigue un ciclo de desarrollo iterativo registrado minuciosamente. Parte de la v1.0 creada por **Rafa Tatay** (macOS, aplausos) y ha evolucionado bajo una arquitectura robusta:
 > - **v1.0 (Registro [v1](file:///c:/Projects/jarvis/registros_ia/implementation_plans/v1_migracion_windows_tts_y_tools.md)):** Migración inicial a Windows y Clean Architecture (SOLID), reemplazando la rigidez original por un flujo de diálogo dinámico y TTS de red neuronal.
 > - **v2.0 (Registro [v2](file:///c:/Projects/jarvis/registros_ia/implementation_plans/v2_fallback_de_agentes.md)):** Resiliencia multicapa. Integración de fallback inteligente a voces locales y rotación de modelos si falla internet o la API.
 > - **v3.0 (Registro [v3](file:///c:/Projects/jarvis/registros_ia/implementation_plans/v3_jarvis_3_evolucion_mayor.md)):** **Evolución Mayor**. Migración completa a la nueva SDK `google-genai`, reemplazo de aplausos por wakeword "Hey Jarvis" 100% local (openWakeWord) y Google Search integrado.
 > - **v3.1 (Registro [v4](file:///c:/Projects/jarvis/registros_ia/implementation_plans/v4_pauta_silencio_inteligente.md)):** **Oído Inteligente**. Implementación de "Pauta de Silencio Inteligente" con umbral dinámico de espera (2.0s por defecto) y remoción de límites de tiempo para permitir la elaboración de ideas complejas sin cortes.
-> - **v3.2 (Registro [v5](file:///c:/Projects/jarvis/registros_ia/implementation_plans/v5_consolidacion_sistemas.md) - Actual):** **Consolidación de Sistemas**. Biometría vocal con SVM, modo offline autónomo con parser local de intenciones, diagnóstico de hardware Iron-Man, continuidad del diálogo ante rotación de llaves, interfaz gráfica neural (Eel + Canvas), y gestión de software vía Winget.
+> - **v3.2 (Registro [v5](file:///c:/Projects/jarvis/registros_ia/implementation_plans/v5_consolidacion_sistemas.md)):** **Consolidación de Sistemas**. Biometría vocal básica, modo offline autónomo, diagnóstico Iron-Man y UI con Eel.
+> - **v4.0 (Actual):** **Desktop Nativo y Alta Biometría**. Migración de UI a `pywebview` (aplicación de escritorio nativa, thread-safe). Motor biométrico reescrito con estándar industrial MFCC (78 features, deltas, CMVN) y SVM balanceado.
 
 
 ## ¿Qué hace?
@@ -24,8 +25,8 @@ Jarvis es un asistente de escritorio con voz neural que:
 ### Red Neuronal Resiliente
 Soporte para hasta 10 llaves API de respaldo. Jarvis rota automáticamente entre llaves y modelos (`Gemini 2.5 Flash`, `2.0 Flash`, `Flash-Latest`) si se agota la cuota o falla el servidor. El historial de conversación se preserva íntegramente entre rotaciones gracias a un buffer circular en memoria.
 
-### Biometría Vocal
-Autenticación basada en firma de voz usando **SVM (Support Vector Machine)** entrenado con 40 coeficientes Mel (20 promedios + 20 varianzas). Soporte para enrolamiento interactivo con muestras positivas, palabras de control y ruido ambiente, más aumentación de datos Gaussiana para robustez.
+### Biometría Vocal Avanzada (MFCC)
+Autenticación basada en firma de voz usando **SVM Balanceado** entrenado con un pipeline industrial: 78 características (13 MFCCs, 13 Deltas, 13 Delta-Deltas, con sus medias y varianzas) y normalización CMVN. Soporte para enrolamiento interactivo con muestras posicionales, palabras de control, variabilidad adversaria y ruido ambiente, más data augmentation exhaustiva.
 
 ### Oído Biónico
 Ganancia de audio optimizada (x15.0) mediante procesamiento de señales en tiempo real, permitiendo que Jarvis te escuche perfecto incluso con micrófonos integrados de bajo volumen.
@@ -42,8 +43,8 @@ Parser local de intenciones (`OfflineIntentParser`) basado en expresiones regula
 ### Diagnóstico de Hardware (Iron-Man)
 Telemetría en tiempo real de CPU, RAM, disco y batería con personalidad rioplatense. Usa `psutil` si está disponible, con fallbacks nativos de Windows vía WMIC.
 
-### Interfaz Gráfica Neural
-UI web embebida con **Eel** que muestra un orbe animado (Canvas 2D), secuencia de booteo cinematográfica, indicadores de estado, modelo activo, llave en uso y estado biométrico en tiempo real.
+### Interfaz Gráfica Nativa (pywebview)
+Aplicación de escritorio nativa renderizada vía **pywebview** (cero dependencias de servidores web). Muestra un orbe animado en Canvas 2D, secuencia de booteo cinematográfica, indicadores de estado, modelo activo, llave en uso y estado biométrico en tiempo real, todo sin bloquear el hilo de captura de audio.
 
 
 ## Herramientas disponibles
@@ -82,7 +83,7 @@ jarvis/
 │   │   ├── wakeword.py          # Detector de wakeword (openWakeWord)
 │   │   ├── voice_auth.py        # Biometría vocal (SVM + Mel features)
 │   │   ├── offline_parser.py    # Parser local de intenciones (modo offline)
-│   │   └── ui_bridge.py         # Puente de comunicación con la UI (Eel)
+│   │   └── ui_bridge.py         # Puente de comunicación asíncrona con la UI (pywebview)
 │   ├── tools/                   # Herramientas de sistema inyectables en Gemini
 │   │   ├── __init__.py          # Registro central y TOOLS_LIST
 │   │   ├── info_tools.py        # Hora, clima, investigación web
@@ -94,7 +95,7 @@ jarvis/
 │   │       ├── software.py      # Instalar/desinstalar vía Winget
 │   │       ├── diagnostics.py   # Telemetría de hardware
 │   │       └── session.py       # Finalización de sesión
-│   └── ui/                      # Interfaz gráfica neural (Eel)
+│   └── ui/                      # Frontend HTML/CSS/JS (renderizado nativo por pywebview)
 │       ├── index.html           # Estructura HTML
 │       ├── styles.css           # Estilos y animaciones
 │       └── app.js               # Orbe animado, boot sequence, HUD
@@ -121,7 +122,7 @@ jarvis/
 
 2. **Instalar dependencias:**
    ```bash
-   pip install google-genai python-dotenv SpeechRecognition pyaudio edge-tts pygame openwakeword onnxruntime pycaw comtypes pygetwindow pyttsx3 scikit-learn eel
+   pip install google-genai python-dotenv SpeechRecognition pyaudio edge-tts pygame openwakeword onnxruntime pycaw comtypes pygetwindow pyttsx3 scikit-learn pywebview
    ```
    > **Opcional:** `pip install psutil` para telemetría de hardware precisa. Sin `psutil`, Jarvis usa fallbacks nativos de Windows (WMIC).
 
@@ -164,10 +165,11 @@ Para usar la biometría de voz, primero **entrená tu firma vocal**:
 python enrolar.py
 ```
 
-El script te guía paso a paso por un proceso de 3 fases:
-1. **5 grabaciones** diciendo "Hey Jarvis" (muestras positivas).
-2. **3 grabaciones** de palabras de control (muestras negativas).
-3. **1 grabación** de 5 segundos en silencio absoluto (ruido de fondo).
+El script te guía paso a paso por un proceso de 4 fases para capturar la huella espectral de tu voz:
+1. **8 grabaciones** diciendo "Hey Jarvis" (variando tono y distancia).
+2. **3 grabaciones** de palabras de control (para evitar falsos positivos).
+3. **3 grabaciones** adversarias (susurros y voz tapada).
+4. **1 grabación** de 5 segundos en silencio absoluto (ruido de la habitación).
 
 El modelo SVM entrenado se guarda en `src/core/voice_model.pkl`.
 
@@ -184,4 +186,4 @@ Cuando Jarvis arranque, simplemente decí **"Hey Jarvis"** y hablale naturalment
 > **Tip:** Jarvis está optimizado para escucharte de lejos gracias al boost de ganancia (x15.0). Si sentís que se activa solo por ruidos de fondo, podés subir la sensibilidad del wakeword en el `.env` (`WAKEWORD_SENSITIVITY`).
 
 ---
-*Jarvis 3.2 - Desarrollado con pasión para una automatización total.*
+*Jarvis 4.0 - Desarrollado con pasión para una automatización total.*

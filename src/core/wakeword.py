@@ -70,9 +70,9 @@ class WakeWordDetector:
         print("  👂  Escuchando... (Hablale normal a la laptop)")
         try:
             while True:
-                # Ceder cooperativamente el control a Gevent/Eel
-                import eel
-                eel.sleep(0.005)
+                # Pequeña pausa para no saturar la CPU al 100%
+                import time
+                time.sleep(0.005)
 
                 audio_data = self.stream.read(self.chunk_size, exception_on_overflow=False)
                 audio_array = np.frombuffer(audio_data, dtype=np.int16)

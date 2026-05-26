@@ -9,31 +9,23 @@ if sys.platform == 'win32':
 import time
 from src.core.dialogue import DialogueManager
 from src.core.wakeword import WakeWordDetector
-from src.core.ui_bridge import init_eel, start_ui, update_status
+from src.core.ui_bridge import init_ui, start_ui, update_status, update_footer
 
 
-def main():
-    print("=" * 60)
-    print("  JARVIS 3.0 INICIALIZANDO SISTEMAS...")
-    print("=" * 60)
-
+def run_jarvis():
     try:
-        # Initialize UI first (non‑blocking)
-        init_eel()
-        start_ui()
         # Initialize core components
         dialogue_manager = DialogueManager()
         # El detector se crea una sola vez con baja sensibilidad para mics débiles
         wakeword = WakeWordDetector(sensitivity=0.1, device_index=1, tts=dialogue_manager.tts)
     except Exception as e:
-        print(f"\n  [ERROR] Error de inicialización: {e}")
-        sys.exit(1)
+        print(f"\n  [ERROR] Error de inicialización del core: {e}")
+        return
 
     print("\n  [MIC]  Sistemas online. Di 'Hey Jarvis' para activarme. (Ctrl+C para salir)")
     print("-" * 60)
 
-    # Notify UI that backend is ready and push system details to footer
-    from src.core.ui_bridge import update_footer
+    # Push system details to footer
     try:
         update_status("READY", "#00ff00")
         update_footer("status", "READY")
@@ -66,7 +58,23 @@ def main():
     except KeyboardInterrupt:
         print("\n\n  Desconectando sistemas. Hasta luego, señor Carlos. [BYE]")
         wakeword.cleanup()
-        sys.exit(0)
+        import os
+        os._exit(0)
+
+
+def main():
+    print("=" * 60)
+    print("  JARVIS 4.0 INICIALIZANDO SISTEMAS...")
+    print("=" * 60)
+
+    try:
+        # Initialize UI first (non‑blocking start)
+        init_ui()
+        # start_ui blocks the main thread and runs run_jarvis in background
+        start_ui(run_jarvis)
+    except Exception as e:
+        print(f"\n  [ERROR] Error de inicialización: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

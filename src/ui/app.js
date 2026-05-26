@@ -2,10 +2,9 @@
 // Canvas-based orb with organic rings, flower of life, voice wave distortion,
 // orbiting dots, biometrics arc, and boot sequence.
 
-// ─── Eel Guard ───
-if (typeof eel === 'undefined') {
-  console.error('Eel is not loaded.');
-}
+// ─── pywebview Bridge ───
+// Python calls JS functions directly via window.evaluate_js()
+// JS calls Python via window.pywebview.api.method()
 
 // ─── Global State ───
 const state = {
@@ -486,9 +485,9 @@ function startBootSequence() {
         footer.classList.remove('hidden');
         if (clock) clock.classList.add('visible');
 
-        // Notify Python
-        if (typeof eel !== 'undefined') {
-          eel.ui_ready();
+        // Notify Python via pywebview bridge
+        if (window.pywebview && window.pywebview.api) {
+          window.pywebview.api.ui_ready();
         }
       }, 600);
     }
@@ -511,8 +510,8 @@ function startClock() {
 }
 
 // ══════════════════════════════════════════════
-//  EEL-EXPOSED UI UPDATE FUNCTIONS
-//  (Signatures preserved — backend contract intact)
+//  UI UPDATE FUNCTIONS
+//  (Called from Python via window.evaluate_js — contract intact)
 // ══════════════════════════════════════════════
 function updateStatus(text, color) {
   try {
@@ -536,7 +535,7 @@ function updateStatus(text, color) {
 }
 
 function addChatMessage(sender, message) {
-  // Chat removed — silent log to keep Eel contract
+  // Chat removed — silent log to keep backend contract
   console.log(`[CHAT] ${sender}: ${message}`);
 }
 
@@ -582,14 +581,9 @@ function hexToRgbaPulse(hex) {
   return `rgba(${r}, ${g}, ${b}, ALPHA)`;
 }
 
-// ── Eel Expose ──
-if (typeof eel !== 'undefined') {
-  eel.expose(updateStatus);
-  eel.expose(addChatMessage);
-  eel.expose(updateBiometrics);
-  eel.expose(updateWaveform);
-  eel.expose(updateFooter);
-}
+// ── Functions are globally accessible ──
+// pywebview calls them directly via window.evaluate_js()
+// No expose registration needed — functions are already in global scope.
 
 // ══════════════════════════════════════════════
 //  INIT
