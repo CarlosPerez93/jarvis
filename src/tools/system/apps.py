@@ -15,7 +15,7 @@ APP_MAPPING = {
     "navegador": "start chrome", # O msedge
     "chrome": "chrome",
     "edge": "msedge",
-    "spotify": "spotify",
+    "spotify": "spotify:",
     "discord": "discord",
     "visual studio code": "code",
     "vscode": "code",

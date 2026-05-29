@@ -15,7 +15,7 @@ class TTSProvider:
         
         # Inicializar el motor local de Windows por si falla el neural
         self.local_engine = pyttsx3.init()
-        self.local_engine.setProperty('rate', 148) # Velocidad natural a 148 wpm
+        self.local_engine.setProperty('rate', 198) # Velocidad natural a 148 wpm
 
     def speak(self, text: str) -> None:
         """Sintetiza y reproduce texto. Si falla la red, usa voz local."""
@@ -50,7 +50,7 @@ class TTSProvider:
             temp_file = f"temp_voice_{self._temp_counter % 2}.mp3"
 
             async def _generate_audio():
-                communicate = edge_tts.Communicate(text, "es-CO-GonzaloNeural", rate="+0%")
+                communicate = edge_tts.Communicate(text, "es-MX-JorgeNeural", rate="+0%")
                 await communicate.save(temp_file)
 
             asyncio.run(_generate_audio())

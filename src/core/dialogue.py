@@ -18,17 +18,17 @@ class DialogueManager:
         # Mapear nombres de las funciones a sus objetos en memoria
         self.tools_map = {tool.__name__: tool for tool in TOOLS_LIST}
 
-        # Saludos variados en tono profesional colombiano paisa
+        # Saludos variados en tono profesional y neutro
         self._greetings = [
-            "¿En qué le puedo colaborar, señor Carlos?",
+            "¿En qué le puedo ayudar, señor Carlos?",
             "A sus órdenes, Carlos. ¿Qué hacemos hoy?",
             "Adelante, lo escucho.",
-            "¿Qué se le ofrece, señor Carlos?",
+            "¿Qué necesita, señor Carlos?",
             "Sí, señor Carlos, dígame.",
             "Aquí estoy, a su servicio.",
         ]
 
-        # Despedidas variadas en tono profesional colombiano paisa
+        # Despedidas variadas en tono profesional y neutro
         self._goodbyes = [
             "Hasta luego, señor Carlos. Que esté muy bien.",
             "Con gusto, señor Carlos. Quedo muy atento.",
@@ -140,7 +140,14 @@ class DialogueManager:
             # 6. Decidir si seguimos (heurística simple: si la respuesta termina en '?' o es corta)
             # Por ahora, simplemente intentamos escuchar UNA VEZ MÁS siempre.
             # Si el usuario quiere terminar, suele decir "gracias" o quedarse en silencio.
-            if any(bye in user_text.lower() for bye in ["gracias", "chau", "adiós", "nada más"]):
+            if "adiós a jarvis" in user_text.lower() or "adios a jarvis" in user_text.lower():
+                print("  👋  Apagado completo detectado.")
+                self.tts.speak("Desconectando sistemas por completo. Hasta la próxima.")
+                import time
+                time.sleep(1.0)
+                import os
+                os._exit(0)
+            elif any(bye in user_text.lower() for bye in ["gracias", "chau", "adiós", "adios", "nada más"]):
                 print("  👋  Despedida detectada.")
                 continuar_charla = False
                 

@@ -22,6 +22,18 @@ def run_jarvis():
         print(f"\n  [ERROR] Error de inicialización del core: {e}")
         return
 
+    print("\n  [SYS]  Ejecutando secuencia de arranque...")
+    try:
+        dialogue_manager.tts.speak("Iniciando protocolos principales de sistema.")
+        time.sleep(0.2)
+        dialogue_manager.tts.speak("Cargando motor de procesamiento de lenguaje natural y redes neuronales.")
+        time.sleep(0.2)
+        dialogue_manager.tts.speak("Sistemas biométricos, telemetría e interfaz de usuario en línea.")
+        time.sleep(0.2)
+        dialogue_manager.tts.speak("Todos los sistemas están operativos. A su entera disposición, señor Carlos.")
+    except Exception as e:
+        print(f"  [ERROR] Falla en la voz de arranque: {e}")
+
     print("\n  [MIC]  Sistemas online. Di 'Hey Jarvis' para activarme. (Ctrl+C para salir)")
     print("-" * 60)
 
