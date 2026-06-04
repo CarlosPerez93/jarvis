@@ -2,6 +2,7 @@ import datetime
 import urllib.request
 import json
 import os
+import glob
 from google import genai
 from google.genai import types
 
@@ -50,3 +51,46 @@ def investigar_en_internet(consulta: str) -> str:
             continue
             
     return "No pude realizar la búsqueda. Parece que todas mis llaves de internet están agotadas."
+
+def leer_registro_ia(categoria: str, version: str) -> str:
+    """
+    Lee los archivos de registros de IA de Jarvis almacenados localmente.
+    Args:
+        categoria: La categoría del registro ('implementation_plans', 'tasks', o 'walkthroughs').
+        version: La versión del registro (ejemplo: 'v1', 'v2', 'v4', etc.).
+    Returns:
+        El contenido del registro solicitado o un mensaje de error si no se encuentra.
+    """
+    print(f"  📂  Buscando registro IA: Categoría={categoria}, Versión={version}...")
+    base_path = r"c:\Projects\jarvis\registros_ia"
+    
+    categoria = categoria.lower().strip()
+    valid_categories = ["implementation_plans", "tasks", "walkthroughs"]
+    
+    # Mapeo simple por si el LLM interpreta mal la categoría
+    if categoria not in valid_categories:
+        if "plan" in categoria: categoria = "implementation_plans"
+        elif "task" in categoria or "tarea" in categoria: categoria = "tasks"
+        elif "walkthrough" in categoria or "guia" in categoria or "pauta" in categoria: categoria = "walkthroughs"
+        else:
+            return f"Categoría '{categoria}' no es válida. Las opciones son: {', '.join(valid_categories)}."
+            
+    # Aseguramos que la versión tenga el prefijo 'v'
+    version = str(version).lower().strip()
+    if not version.startswith("v"):
+        version = f"v{version}"
+        
+    search_pattern = os.path.join(base_path, categoria, f"{version}_*.md")
+    files = glob.glob(search_pattern)
+    
+    if not files:
+        return f"No encontré ningún archivo para la categoría '{categoria}' y versión '{version}'."
+        
+    target_file = files[0]
+    try:
+        with open(target_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        return f"Contenido del registro '{os.path.basename(target_file)}':\n\n{content}"
+    except Exception as e:
+        return f"Ocurrió un error al leer el archivo {target_file}: {e}"
+

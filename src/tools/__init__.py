@@ -9,7 +9,7 @@ from .system.media import reproducir_musica
 from .system.session import finalizar_sesion
 
 # Herramientas de Información
-from .info_tools import obtener_hora, obtener_clima, investigar_en_internet
+from .info_tools import obtener_hora, obtener_clima, investigar_en_internet, leer_registro_ia
 
 # Herramientas de Navegación (GPS)
 from .navigation import buscar_en_mapa, trazar_ruta
@@ -41,6 +41,7 @@ TOOLS_LIST = [
     obtener_hora,
     obtener_clima,
     investigar_en_internet,
+    leer_registro_ia,
     
     # Navegación y Mapas
     buscar_en_mapa,
