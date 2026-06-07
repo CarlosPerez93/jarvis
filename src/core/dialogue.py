@@ -6,7 +6,7 @@ from .tts import TTSProvider
 from .llm_engine import LLMEngine
 from src.tools import TOOLS_LIST
 from src.tools.system.session import ExitSession
-from src.core.ui_bridge import update_status, add_chat_message
+from src.core.ui_bridge import update_status, add_chat_message, show_modal
 
 
 class DialogueManager:
@@ -130,6 +130,10 @@ class DialogueManager:
                                 try:
                                     update_status("SPEAKING", "#00ffff")
                                     add_chat_message("Jarvis", result_msg)
+                                    # Show modal for the action result (auto closes after 4s) unless it's a search
+                                    # Investigar_en_internet already handles its own modal, but showing another is fine or we can skip if tool is investigar_en_internet
+                                    if func_name != "investigar_en_internet":
+                                        show_modal(f"Acción: {func_name.replace('_', ' ').title()}", result_msg, "action", 4000)
                                 except Exception:
                                     pass
                                 if wakeword:
@@ -139,6 +143,7 @@ class DialogueManager:
                                 if tool_interrupted:
                                     interrupted_context = "[Sistema: Fui interrumpido mientras daba el resultado de la herramienta.]"
                                     break
+
                         except ExitSession as e:
                             # Decir adiós y cerrar el proceso
                             exit_msg = str(e)

@@ -60,6 +60,41 @@
         </div>
     </footer>
 
+    <!-- Orb Threads — SVG overlay that connects modals to the orb nucleus -->
+    <svg id="orb-threads" class="orb-threads-overlay" xmlns="http://www.w3.org/2000/svg"></svg>
+
+    <!-- Search Cache FAB -->
+    <button id="search-cache-fab" class="search-cache-fab hidden" onclick="restoreSearchModals()" title="Restaurar Búsqueda">
+        🔍 <span id="cache-badge" class="cache-badge">0</span>
+    </button>
+
+    <!-- Floating Action Button (FAB) & Menu -->
+    <div id="fab-container" class="fab-container hidden">
+        <button id="fab-main" class="fab-main" title="Configuraciones">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+        </button>
+        <div id="fab-menu" class="fab-menu">
+            <button class="fab-item" onclick="triggerAction('train_voice')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+                <span>Entrenar Voz</span>
+            </button>
+            <!-- Más opciones pueden ir aquí en el futuro -->
+        </div>
+    </div>
+
+    <!-- Modals Container -->
+    <div id="modals-container" class="modals-container">
+        <!-- Los modales se inyectarán aquí dinámicamente -->
+    </div>
+
     <!-- pywebview injects its bridge automatically -->
     <script src="app.js"></script>
 </body>

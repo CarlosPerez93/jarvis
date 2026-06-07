@@ -14,6 +14,9 @@ from .info_tools import obtener_hora, obtener_clima, investigar_en_internet, lee
 # Herramientas de Navegación (GPS)
 from .navigation import buscar_en_mapa, trazar_ruta
 
+# Herramientas de Control UI
+from .ui_control_tools import cerrar_busqueda, minimizar_busqueda, restaurar_busqueda
+
 # Lista maestra de herramientas para inyectar en Gemini
 TOOLS_LIST = [
     # Aplicaciones y Procesos
@@ -46,4 +49,9 @@ TOOLS_LIST = [
     # Navegación y Mapas
     buscar_en_mapa,
     trazar_ruta,
+    
+    # Control de Interfaz
+    cerrar_busqueda,
+    minimizar_busqueda,
+    restaurar_busqueda,
 ]

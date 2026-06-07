@@ -24,6 +24,19 @@ class JarvisApi:
         print("[UI] Front‑end reports ready")
         _ready_event.set()
 
+    def trigger_action(self, action: str) -> None:
+        """Llamado desde JS cuando el usuario hace clic en una opción del FAB."""
+        print(f"[UI] Front-end disparó acción: {action}")
+        if action == "train_voice":
+            print("\n[UI] Inicializando modo de entrenamiento interactivo...")
+            # Aquí podríamos emitir un evento a DialogueManager
+            # o simplemente ejecutar enrolar.py en una nueva terminal
+            import subprocess
+            try:
+                subprocess.Popen(["cmd.exe", "/c", "start", "python", "enrolar.py"])
+            except Exception as e:
+                print(f"[ERROR] No se pudo lanzar el entrenamiento: {e}")
+
 
 # ═══════════════════════════════════════════════
 #  INIT & START
@@ -112,3 +125,27 @@ def update_waveform(data_array: list) -> None:
 def update_footer(key: str, value: str) -> None:
     """Update a footer item (e.g., model, key, auth)."""
     _eval_js(f"updateFooter({_escape_js_string(key)}, {_escape_js_string(value)})")
+
+def show_modal(title: str, content: str, modal_type: str = 'action', auto_close_ms: int = None) -> None:
+    """Shows a modal in the UI.
+    If auto_close_ms is provided, it will close automatically after that time.
+    """
+    auto_close_arg = str(auto_close_ms) if auto_close_ms else 'null'
+    js_code = f"showModal({_escape_js_string(title)}, {_escape_js_string(content)}, {_escape_js_string(modal_type)}, {auto_close_arg})"
+    _eval_js(js_code)
+
+def show_search_results(query: str, results: list) -> None:
+    """Shows multiple modals for search results."""
+    _eval_js(f"showSearchResults({_escape_js_string(query)}, {json.dumps(results)})")
+
+def close_search() -> None:
+    """Cierra todos los modales de búsqueda."""
+    _eval_js("closeAllSearchModals()")
+
+def minimize_search() -> None:
+    """Minimiza los modales de búsqueda."""
+    _eval_js("minimizeSearchModals()")
+
+def restore_search() -> None:
+    """Restaura los modales de búsqueda."""
+    _eval_js("restoreSearchModals()")

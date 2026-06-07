@@ -586,10 +586,366 @@ function hexToRgbaPulse(hex) {
 // No expose registration needed — functions are already in global scope.
 
 // ══════════════════════════════════════════════
+//  FAB & MODALS LOGIC
+// ══════════════════════════════════════════════
+
+let _searchCache = null;
+
+function initFAB() {
+  const fabContainer = document.getElementById('fab-container');
+  const fabMain = document.getElementById('fab-main');
+  if (fabMain) {
+    fabMain.addEventListener('click', () => {
+      fabContainer.classList.toggle('active');
+    });
+  }
+}
+
+function triggerAction(action) {
+  const fabContainer = document.getElementById('fab-container');
+  if (fabContainer) fabContainer.classList.remove('active');
+  
+  if (window.pywebview && window.pywebview.api) {
+    window.pywebview.api.trigger_action(action);
+  } else {
+    console.warn(`[API] Triggered action '${action}', but pywebview is not available.`);
+  }
+}
+
+// ── Gradient generator based on title string ──
+function titleToGradient(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const h1 = Math.abs(hash) % 360;
+  const h2 = (h1 + 55) % 360;
+  return `linear-gradient(135deg, hsl(${h1},65%,12%) 0%, hsl(${h2},80%,18%) 100%)`;
+}
+
+// ── Build modal HTML ──
+function buildModalHTML(modalId, title, bodyHTML, gradient, isSearch = false) {
+  const letter = (title || 'J')[0].toUpperCase();
+  const expandAttr = isSearch ? `onclick="toggleModalExpand('${modalId}')"` : '';
+  
+  return `
+    <div class="modal-visual" style="background: ${gradient}" ${expandAttr}>
+      <span class="modal-visual-letter">${letter}</span>
+      <div class="modal-visual-overlay"></div>
+    </div>
+    <div class="modal-header" ${expandAttr}>
+      <div class="modal-title">${title}</div>
+      <button class="modal-close" onclick="closeModal('${modalId}')">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-content-area">${bodyHTML}</div>
+  `;
+}
+
+function showModal(title, content, type = 'action', autoCloseMs = null) {
+  const container = document.getElementById('modals-container');
+  if (!container) return;
+
+  const modalId = 'modal-' + Date.now();
+  const modal = document.createElement('div');
+  modal.className = 'jarvis-modal';
+  modal.id = modalId;
+
+  const bodyHTML = content.replace(/\n/g, '<br>');
+  modal.innerHTML = buildModalHTML(modalId, title, bodyHTML, titleToGradient(title));
+
+  container.appendChild(modal);
+
+  // Center single modals; CSS flyIn handles scale/opacity from orb center
+  modal.style.left = `${(window.innerWidth - 300) / 2}px`;
+  modal.style.top  = `${(window.innerHeight - 300) / 2}px`;
+
+  makeDraggable(modal);
+  setTimeout(updateOrbThreads, 50); // after layout
+
+  if (autoCloseMs) {
+    setTimeout(() => { closeModal(modalId); }, autoCloseMs);
+  }
+
+  return modalId;
+}
+
+function showSearchResults(query, resultsArray) {
+  const container = document.getElementById('modals-container');
+  if (!container) return;
+
+  // Cache it
+  _searchCache = { query, results: resultsArray, positions: [] };
+
+  // Clear existing search modals
+  container.innerHTML = '';
+  updateOrbThreads(); // Clear threads too
+  
+  // Hide cache FAB if it was visible
+  const cacheFab = document.getElementById('search-cache-fab');
+  if (cacheFab) cacheFab.classList.add('hidden');
+
+  resultsArray.forEach((result, index) => {
+    const modalId = 'modal-search-' + Date.now() + '-' + index;
+    const modal = document.createElement('div');
+    modal.className = 'jarvis-modal';
+    modal.id = modalId;
+
+    // Image html: real URL if available, else empty (gradient bg + letter used)
+    const imageHtml = result.image_url
+      ? `<img src="${result.image_url}" alt="${result.title}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0" onerror="this.remove()">`
+      : '';
+
+    const visualStyle = `background: ${titleToGradient(result.title || query)}`;
+    const letter = (result.title || query || 'J')[0].toUpperCase();
+    const bodyHTML = result.description ? result.description.replace(/\n/g, '<br>') : '';
+
+    modal.innerHTML = `
+      <div class="modal-visual" style="${visualStyle}" onclick="toggleModalExpand('${modalId}')">
+        ${imageHtml}
+        <span class="modal-visual-letter">${letter}</span>
+        <div class="modal-visual-overlay"></div>
+      </div>
+      <div class="modal-header" onclick="toggleModalExpand('${modalId}')">
+        <div class="modal-title">${result.title || 'Resultado'}</div>
+        <button class="modal-close" onclick="closeModal('${modalId}')">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-content-area">${bodyHTML}</div>
+    `;
+
+    // Scatter around the screen with safe margins
+    const pad = 30;
+    const mW = 300, mH = 280;
+    const maxX = window.innerWidth - mW - pad;
+    const maxY = window.innerHeight - mH - pad;
+    modal.style.left = `${Math.max(pad, Math.random() * maxX)}px`;
+    modal.style.top  = `${Math.max(pad, Math.random() * maxY)}px`;
+
+    // Stagger so they fly in one after the other
+    modal.style.animationDelay = `${index * 0.12}s`;
+
+    container.appendChild(modal);
+    makeDraggable(modal);
+    
+    // Store position for restoring later
+    _searchCache.positions.push({ id: modalId, left: modal.style.left, top: modal.style.top, delay: modal.style.animationDelay });
+  });
+
+  // Update threads after all modals are laid out
+  setTimeout(updateOrbThreads, 100);
+}
+
+function toggleModalExpand(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.toggle('expanded');
+    updateOrbThreads(); // re-draw as size changes
+  }
+}
+
+function closeAllSearchModals() {
+  const modals = document.querySelectorAll('.jarvis-modal[id^="modal-search-"]');
+  modals.forEach(m => closeModal(m.id));
+  _searchCache = null; // clear cache
+  const cacheFab = document.getElementById('search-cache-fab');
+  if (cacheFab) cacheFab.classList.add('hidden');
+}
+
+function minimizeSearchModals() {
+  if (!_searchCache || _searchCache.results.length === 0) return;
+  
+  // Update cached positions before minimizing
+  const modals = document.querySelectorAll('.jarvis-modal[id^="modal-search-"]');
+  modals.forEach((m, idx) => {
+    if (_searchCache.positions[idx]) {
+      _searchCache.positions[idx].left = m.style.left;
+      _searchCache.positions[idx].top = m.style.top;
+    }
+    // Remove without animation to make it instant (or use close with anim)
+    closeModal(m.id);
+  });
+  
+  // Show cache FAB
+  const cacheFab = document.getElementById('search-cache-fab');
+  const badge = document.getElementById('cache-badge');
+  if (cacheFab && badge) {
+    badge.innerText = _searchCache.results.length;
+    cacheFab.classList.remove('hidden');
+  }
+}
+
+function restoreSearchModals() {
+  if (!_searchCache || _searchCache.results.length === 0) return;
+  
+  // Re-run show with cached positions
+  const container = document.getElementById('modals-container');
+  if (!container) return;
+  
+  // Hide FAB
+  const cacheFab = document.getElementById('search-cache-fab');
+  if (cacheFab) cacheFab.classList.add('hidden');
+  
+  _searchCache.results.forEach((result, index) => {
+    const cachedPos = _searchCache.positions[index];
+    const modalId = cachedPos ? cachedPos.id : 'modal-search-' + Date.now() + '-' + index;
+    
+    // If it's still in DOM, don't recreate
+    if (document.getElementById(modalId)) return;
+    
+    const modal = document.createElement('div');
+    modal.className = 'jarvis-modal';
+    modal.id = modalId;
+
+    const imageHtml = result.image_url
+      ? `<img src="${result.image_url}" alt="${result.title}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0" onerror="this.remove()">`
+      : '';
+
+    const visualStyle = `background: ${titleToGradient(result.title || _searchCache.query)}`;
+    const letter = (result.title || _searchCache.query || 'J')[0].toUpperCase();
+    const bodyHTML = result.description ? result.description.replace(/\n/g, '<br>') : '';
+
+    modal.innerHTML = `
+      <div class="modal-visual" style="${visualStyle}" onclick="toggleModalExpand('${modalId}')">
+        ${imageHtml}
+        <span class="modal-visual-letter">${letter}</span>
+        <div class="modal-visual-overlay"></div>
+      </div>
+      <div class="modal-header" onclick="toggleModalExpand('${modalId}')">
+        <div class="modal-title">${result.title || 'Resultado'}</div>
+        <button class="modal-close" onclick="closeModal('${modalId}')">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-content-area">${bodyHTML}</div>
+    `;
+
+    if (cachedPos) {
+      modal.style.left = cachedPos.left;
+      modal.style.top = cachedPos.top;
+      modal.style.animationDelay = cachedPos.delay;
+    }
+    
+    container.appendChild(modal);
+    makeDraggable(modal);
+  });
+  
+  setTimeout(updateOrbThreads, 100);
+}
+
+function makeDraggable(modal) {
+  const header = modal.querySelector('.modal-header');
+  if (!header) return;
+  
+  let isDragging = false;
+  let startX, startY, initialX, initialY;
+
+  header.addEventListener('mousedown', dragStart);
+  
+  function dragStart(e) {
+    if (e.target.closest('.modal-close')) return;
+    
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    // Get current transform/position
+    const rect = modal.getBoundingClientRect();
+    initialX = rect.left;
+    initialY = rect.top;
+    
+    // Remove transform if it exists so we rely purely on left/top
+    modal.style.transform = 'none';
+    modal.style.left = initialX + 'px';
+    modal.style.top = initialY + 'px';
+    
+    // Bring to front
+    document.querySelectorAll('.jarvis-modal').forEach(m => m.style.zIndex = '1');
+    modal.style.zIndex = '100';
+
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+  }
+
+  function drag(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    modal.style.left = (initialX + dx) + 'px';
+    modal.style.top  = (initialY + dy) + 'px';
+    updateOrbThreads(); // live-update thread as modal moves
+  }
+
+  function dragEnd() {
+    isDragging = false;
+    document.removeEventListener('mousemove', drag);
+    document.removeEventListener('mouseup', dragEnd);
+    updateOrbThreads();
+  }
+}
+
+function updateOrbThreads() {
+  const svg = document.getElementById('orb-threads');
+  if (!svg) return;
+
+  svg.innerHTML = ''; // clear
+
+  const modals = document.querySelectorAll('.jarvis-modal:not(.closing)');
+  modals.forEach(modal => {
+    const rect = modal.getBoundingClientRect();
+    if (rect.width === 0) return; // not yet rendered
+
+    const mx = rect.left + rect.width / 2;
+    const my = rect.top  + rect.height / 2;
+
+    // cx/cy are the global orb center vars from canvas setup
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', cx);
+    line.setAttribute('y1', cy);
+    line.setAttribute('x2', mx);
+    line.setAttribute('y2', my);
+    line.setAttribute('class', 'orb-thread');
+    svg.appendChild(line);
+  });
+}
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+
+  modal.classList.add('closing');
+  setTimeout(() => {
+    if (modal.parentNode) {
+      modal.parentNode.removeChild(modal);
+    }
+    updateOrbThreads(); // redraw after removal
+  }, 300);
+}
+
+// ══════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
   requestAnimationFrame(render);
   startBootSequence();
   startClock();
+  initFAB();
+  
+  // Show FAB after boot
+  setTimeout(() => {
+    const fabContainer = document.getElementById('fab-container');
+    if (fabContainer) fabContainer.classList.remove('hidden');
+  }, 4000);
 });

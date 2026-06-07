@@ -35,17 +35,45 @@ def investigar_en_internet(consulta: str) -> str:
         k = os.getenv(f"GEMINI_API_KEY_{i}")
         if k: keys.append(k.strip())
         
+    # Modificamos la consulta para exigir JSON estructurado
+    prompt_json = (
+        f"Por favor, investiga en internet: «{consulta}»\n"
+        "INSTRUCCIÓN ESTRICTA: Tu respuesta FINAL debe ser ÚNICAMENTE un array JSON válido (sin backticks, sin ```json). "
+        "Debe contener hasta 10 resultados relevantes. "
+        "Cada objeto debe tener: 'title' (string), 'description' (string) y 'image_url' (string, URL de una imagen relacionada o vacío si no hay). "
+        "Si no encuentras información, devuelve []."
+    )
+    
     for idx, api_key in enumerate(keys):
         try:
             client = genai.Client(api_key=api_key)
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
-                contents=consulta,
+                contents=prompt_json,
                 config=types.GenerateContentConfig(
                     tools=[types.Tool(google_search=types.GoogleSearch())]
                 )
             )
-            return response.text
+            # Intentamos parsear la respuesta como JSON
+            raw_text = response.text.strip()
+            if raw_text.startswith("```json"):
+                raw_text = raw_text[7:-3].strip()
+            elif raw_text.startswith("```"):
+                raw_text = raw_text[3:-3].strip()
+                
+            try:
+                results_json = json.loads(raw_text)
+                if isinstance(results_json, list) and len(results_json) > 0:
+                    from src.core.ui_bridge import show_search_results
+                    show_search_results(consulta, results_json)
+                    return "He proyectado los resultados de la búsqueda en tu interfaz."
+                # JSON válido pero lista vacía — fallback a texto
+                raise ValueError("empty list")
+            except Exception:
+                # Fallback: mostrar respuesta cruda en modal simple
+                from src.core.ui_bridge import show_modal
+                show_modal(f"Resultados: {consulta}", raw_text, modal_type="search", auto_close_ms=None)
+                return "He encontrado información, la estoy proyectando en pantalla."
         except Exception as e:
             print(f"  ⚠️  Llave #{idx+1} falló en búsqueda: {str(e)[:50]}...")
             continue
