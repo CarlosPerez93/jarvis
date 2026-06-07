@@ -6,7 +6,7 @@
 > - **v3.0 (Registro [v3](file:///c:/Projects/jarvis/registros_ia/implementation_plans/v3_jarvis_3_evolucion_mayor.md)):** **Evolución Mayor**. Migración completa a la nueva SDK `google-genai`, reemplazo de aplausos por wakeword "Hey Jarvis" 100% local (openWakeWord) y Google Search integrado.
 > - **v3.1 (Registro [v4](file:///c:/Projects/jarvis/registros_ia/implementation_plans/v4_pauta_silencio_inteligente.md)):** **Oído Inteligente**. Implementación de "Pauta de Silencio Inteligente" con umbral dinámico de espera (2.0s por defecto) y remoción de límites de tiempo para permitir la elaboración de ideas complejas sin cortes.
 > - **v3.2 (Registro [v5](file:///c:/Projects/jarvis/registros_ia/implementation_plans/v5_consolidacion_sistemas.md)):** **Consolidación de Sistemas**. Biometría vocal básica, modo offline autónomo, diagnóstico Iron-Man y UI con Eel.
-> - **v4.0 (Actual):** **Desktop Nativo y Alta Biometría**. Migración de UI a `pywebview` (aplicación de escritorio nativa, thread-safe). Motor biométrico reescrito con estándar industrial MFCC (78 features, deltas, CMVN) y SVM balanceado.
+> - **v4.0 (Actual):** **Desktop Nativo y Alta Biometría**. Migración de UI a `pywebview` (aplicación de escritorio nativa, thread-safe). Motor biométrico reescrito con estándar industrial MFCC. HUD dinámico con caché multisesión (burbujas) y fallback automático de imágenes generadas por IA. Feedback vocal asíncrono para eliminar latencia percibida.
 
 
 ## ¿Qué hace?
@@ -43,8 +43,11 @@ Parser local de intenciones (`OfflineIntentParser`) basado en expresiones regula
 ### Diagnóstico de Hardware (Iron-Man)
 Telemetría en tiempo real de CPU, RAM, disco y batería con personalidad rioplatense. Usa `psutil` si está disponible, con fallbacks nativos de Windows vía WMIC.
 
-### Interfaz Gráfica Nativa (pywebview)
-Aplicación de escritorio nativa renderizada vía **pywebview** (cero dependencias de servidores web). Muestra un orbe animado en Canvas 2D, secuencia de booteo cinematográfica, indicadores de estado, modelo activo, llave en uso y estado biométrico en tiempo real, todo sin bloquear el hilo de captura de audio.
+### Interfaz Gráfica Nativa Avanzada (HUD)
+Aplicación de escritorio nativa renderizada vía **pywebview** (cero dependencias de servidores web). Muestra un orbe animado en Canvas 2D, indicadores de estado en tiempo real, y soporte para modales enriquecidos.
+- **Caché Multisesión de Búsquedas:** Agrupa y minimiza búsquedas activas en "burbujas" visuales interactivas, permitiendo retomar contextos previos sin sobreescribir resultados.
+- **Imágenes Contextuales (AI Fallback):** Integración con Pollinations AI para generar instantáneamente imágenes de fondo fotográficas en tarjetas de resultados web.
+- **Feedback Vocal Pre-Ejecución:** Jarvis informa auditivamente cada acción antes de congelarse a procesar, eliminando la latencia percibida.
 
 
 ## Herramientas disponibles
@@ -63,6 +66,9 @@ Aplicación de escritorio nativa renderizada vía **pywebview** (cero dependenci
 | `obtener_hora` | Dice la hora y fecha actual | "¿Qué hora es?" |
 | `obtener_clima` | Consulta el clima de una ciudad | "¿Cómo está el clima en Madrid?" |
 | `investigar_en_internet` | Realiza una investigación profunda en la web | "Busca quién ganó el Oscar este año" |
+| `cerrar_busqueda` | Cierra todas las tarjetas de búsqueda activas | "Cierra la búsqueda" |
+| `minimizar_busqueda` | Minimiza la búsqueda a una burbuja en el HUD | "Limpia la pantalla" |
+| `restaurar_busqueda` | Restaura la última sesión de búsqueda minimizada | "Abre la búsqueda que tenías ahí" |
 | `obtener_estado_sistema` | Diagnóstico de CPU, RAM, disco y batería | "¿Cómo está el sistema?" |
 | `buscar_en_mapa` | Busca un lugar o negocio en Google Maps | "Buscá un parking cerca" |
 | `trazar_ruta` | Traza una ruta en Google Maps | "¿Cómo llego al aeropuerto?" |

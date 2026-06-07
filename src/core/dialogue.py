@@ -117,8 +117,27 @@ class DialogueManager:
                     if func_name in self.tools_map:
                         kwargs = dict(tool_call.args) if hasattr(tool_call, "args") and tool_call.args else {}
                         try:
+                            # Feedback de voz PRE-ejecución si el modelo no generó texto
+                            if not text_response:
+                                if func_name == "investigar_en_internet":
+                                    query = kwargs.get("consulta", "eso")
+                                    pre_msg = f"Conectando a la red para buscar sobre {query}..."
+                                elif func_name == "navegar_a":
+                                    destino = kwargs.get("destino", "el destino")
+                                    pre_msg = f"Calculando ruta hacia {destino}..."
+                                else:
+                                    pre_msg = f"Procesando comando: {func_name.replace('_', ' ')}..."
+                                
+                                try:
+                                    update_status("SPEAKING", "#00ffff")
+                                    add_chat_message("Jarvis", pre_msg)
+                                except Exception:
+                                    pass
+                                self.tts.speak(pre_msg)
+
                             # PUSH TO UI: SYSTEM log/chat message
                             try:
+                                update_status("PROCESSING", "#a000ff")
                                 add_chat_message("System", f"Ejecutando herramienta {func_name}...")
                             except Exception:
                                 pass

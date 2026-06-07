@@ -613,12 +613,19 @@ html, body {
   }
 }
 
-/* ─── Search Cache FAB ─── */
-.search-cache-fab {
+/* ─── Search Cache Bubbles ─── */
+.cache-bubbles-container {
   position: fixed;
   bottom: 5rem;
   left: 2rem;
   z-index: 50;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.cache-bubble {
+  position: relative;
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -632,18 +639,21 @@ html, body {
   box-shadow: 0 0 15px rgba(0, 255, 200, 0.2);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   outline: none;
   font-size: 1.2rem;
+  font-family: var(--font-main);
+  font-weight: 700;
+  animation: bubblePop 0.4s ease forwards;
 }
 
-.search-cache-fab:hover {
+.cache-bubble:hover {
   background: rgba(0, 255, 200, 0.1);
   box-shadow: 0 0 25px rgba(0, 255, 200, 0.4);
-  transform: scale(1.05);
+  transform: translateY(-5px) scale(1.05);
 }
 
-.search-cache-fab.hidden {
+.cache-bubble.hidden {
   opacity: 0;
   pointer-events: none;
   transform: scale(0.5);
@@ -664,4 +674,9 @@ html, body {
   align-items: center;
   font-weight: bold;
   box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+@keyframes bubblePop {
+  0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }

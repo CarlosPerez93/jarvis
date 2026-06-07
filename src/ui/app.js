@@ -626,11 +626,10 @@ function titleToGradient(str) {
 // ── Build modal HTML ──
 function buildModalHTML(modalId, title, bodyHTML, gradient, isSearch = false) {
   const letter = (title || 'J')[0].toUpperCase();
-  const expandAttr = isSearch ? `onclick="toggleModalExpand('${modalId}')"` : '';
+  const expandAttr = isSearch ? `ondblclick="toggleModalExpand('${modalId}')"` : '';
   
   return `
     <div class="modal-visual" style="background: ${gradient}" ${expandAttr}>
-      <span class="modal-visual-letter">${letter}</span>
       <div class="modal-visual-overlay"></div>
     </div>
     <div class="modal-header" ${expandAttr}>
@@ -674,43 +673,46 @@ function showModal(title, content, type = 'action', autoCloseMs = null) {
   return modalId;
 }
 
+let _searchSessions = {};
+let _currentSearchId = null;
+
 function showSearchResults(query, resultsArray) {
   const container = document.getElementById('modals-container');
   if (!container) return;
 
-  // Cache it
-  _searchCache = { query, results: resultsArray, positions: [] };
+  // Si hay una búsqueda activa en pantalla, la minimizamos para guardarla
+  if (_currentSearchId && document.querySelector('.jarvis-modal[id^="modal-search-"]')) {
+    minimizeSearchModals();
+  }
 
-  // Clear existing search modals
+  // Generate new session ID
+  _currentSearchId = 'session-' + Date.now();
+  _searchSessions[_currentSearchId] = { query, results: resultsArray, positions: [] };
+
+  // Clear existing search modals (just in case)
   container.innerHTML = '';
   updateOrbThreads(); // Clear threads too
   
-  // Hide cache FAB if it was visible
-  const cacheFab = document.getElementById('search-cache-fab');
-  if (cacheFab) cacheFab.classList.add('hidden');
-
   resultsArray.forEach((result, index) => {
     const modalId = 'modal-search-' + Date.now() + '-' + index;
     const modal = document.createElement('div');
     modal.className = 'jarvis-modal';
     modal.id = modalId;
 
-    // Image html: real URL if available, else empty (gradient bg + letter used)
-    const imageHtml = result.image_url
-      ? `<img src="${result.image_url}" alt="${result.title}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0" onerror="this.remove()">`
-      : '';
+    // Image html: real URL if available, else Pollinations AI fallback
+    const encodedTitle = encodeURIComponent(result.title || query);
+    const imageUrl = result.image_url || `https://image.pollinations.ai/prompt/${encodedTitle}?width=400&height=200&nologo=true`;
+    const imageHtml = `<img src="${imageUrl}" alt="${result.title}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0" onerror="this.style.display='none'">`;
 
     const visualStyle = `background: ${titleToGradient(result.title || query)}`;
-    const letter = (result.title || query || 'J')[0].toUpperCase();
     const bodyHTML = result.description ? result.description.replace(/\n/g, '<br>') : '';
 
     modal.innerHTML = `
-      <div class="modal-visual" style="${visualStyle}" onclick="toggleModalExpand('${modalId}')">
+      <div class="modal-visual" style="${visualStyle}" ondblclick="toggleModalExpand('${modalId}')">
         ${imageHtml}
-        <span class="modal-visual-letter">${letter}</span>
         <div class="modal-visual-overlay"></div>
       </div>
-      <div class="modal-header" onclick="toggleModalExpand('${modalId}')">
+      <div class="modal-header" ondblclick="toggleModalExpand('${modalId}')">
         <div class="modal-title">${result.title || 'Resultado'}</div>
         <button class="modal-close" onclick="closeModal('${modalId}')">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -737,7 +739,7 @@ function showSearchResults(query, resultsArray) {
     makeDraggable(modal);
     
     // Store position for restoring later
-    _searchCache.positions.push({ id: modalId, left: modal.style.left, top: modal.style.top, delay: modal.style.animationDelay });
+    _searchSessions[_currentSearchId].positions.push({ id: modalId, left: modal.style.left, top: modal.style.top, delay: modal.style.animationDelay });
   });
 
   // Update threads after all modals are laid out
@@ -755,47 +757,101 @@ function toggleModalExpand(modalId) {
 function closeAllSearchModals() {
   const modals = document.querySelectorAll('.jarvis-modal[id^="modal-search-"]');
   modals.forEach(m => closeModal(m.id));
-  _searchCache = null; // clear cache
-  const cacheFab = document.getElementById('search-cache-fab');
-  if (cacheFab) cacheFab.classList.add('hidden');
+  _searchSessions = {}; // clear all sessions
+  _currentSearchId = null;
+  const bubblesContainer = document.getElementById('cache-bubbles-container');
+  if (bubblesContainer) bubblesContainer.innerHTML = '';
 }
 
 function minimizeSearchModals() {
-  if (!_searchCache || _searchCache.results.length === 0) return;
+  if (!_currentSearchId || !_searchSessions[_currentSearchId] || _searchSessions[_currentSearchId].results.length === 0) return;
   
-  // Update cached positions before minimizing
+  const sessionData = _searchSessions[_currentSearchId];
+  
+  // Update cached positions before minimizing, and filter out closed ones
   const modals = document.querySelectorAll('.jarvis-modal[id^="modal-search-"]');
-  modals.forEach((m, idx) => {
-    if (_searchCache.positions[idx]) {
-      _searchCache.positions[idx].left = m.style.left;
-      _searchCache.positions[idx].top = m.style.top;
+  const newResults = [];
+  const newPositions = [];
+  
+  modals.forEach((m) => {
+    const match = sessionData.positions.find(p => p.id === m.id);
+    if (match) {
+      const idx = sessionData.positions.indexOf(match);
+      if (idx !== -1) {
+        newResults.push(sessionData.results[idx]);
+        newPositions.push({
+          id: m.id,
+          left: m.style.left,
+          top: m.style.top,
+          delay: match.delay
+        });
+      }
     }
-    // Remove without animation to make it instant (or use close with anim)
+    // Remove without animation to make it instant
     closeModal(m.id);
   });
   
-  // Show cache FAB
-  const cacheFab = document.getElementById('search-cache-fab');
-  const badge = document.getElementById('cache-badge');
-  if (cacheFab && badge) {
-    badge.innerText = _searchCache.results.length;
-    cacheFab.classList.remove('hidden');
+  sessionData.results = newResults;
+  sessionData.positions = newPositions;
+  
+  // If no modals were left, clean up the session entirely and do not create a bubble
+  if (sessionData.results.length === 0) {
+    delete _searchSessions[_currentSearchId];
+    _currentSearchId = null;
+    return;
   }
+  
+  // Create a bubble for this session if it doesn't exist
+  const bubblesContainer = document.getElementById('cache-bubbles-container');
+  if (bubblesContainer && !document.getElementById(`bubble-${_currentSearchId}`)) {
+    const letter = (sessionData.query || 'J')[0].toUpperCase();
+    const bubble = document.createElement('div');
+    bubble.className = 'cache-bubble';
+    bubble.id = `bubble-${_currentSearchId}`;
+    bubble.title = `Restaurar: ${sessionData.query}`;
+    bubble.onclick = () => restoreSearchSession(_currentSearchId);
+    bubble.innerHTML = `
+      ${letter}
+      <span class="cache-badge">${sessionData.results.length}</span>
+    `;
+    bubblesContainer.appendChild(bubble);
+  }
+  
+  _currentSearchId = null; // Free up active screen
 }
 
 function restoreSearchModals() {
-  if (!_searchCache || _searchCache.results.length === 0) return;
+  // If voice command "restaura", restore the most recently minimized (the one with a bubble)
+  const sessionIds = Object.keys(_searchSessions);
+  for (let i = sessionIds.length - 1; i >= 0; i--) {
+    if (document.getElementById(`bubble-${sessionIds[i]}`)) {
+      restoreSearchSession(sessionIds[i]);
+      break;
+    }
+  }
+}
+
+function restoreSearchSession(sessionId) {
+  const sessionData = _searchSessions[sessionId];
+  if (!sessionData || sessionData.results.length === 0) return;
   
-  // Re-run show with cached positions
+  // Clean up existing modals first if any? No, we can just let them co-exist or we could minimize them.
+  // For now, if there's an active search, let's minimize it automatically to keep screen clean.
+  if (_currentSearchId && _currentSearchId !== sessionId) {
+    minimizeSearchModals();
+  }
+  
+  _currentSearchId = sessionId;
+  
   const container = document.getElementById('modals-container');
   if (!container) return;
   
-  // Hide FAB
-  const cacheFab = document.getElementById('search-cache-fab');
-  if (cacheFab) cacheFab.classList.add('hidden');
+  // Remove the bubble
+  const bubble = document.getElementById(`bubble-${sessionId}`);
+  if (bubble) bubble.remove();
   
-  _searchCache.results.forEach((result, index) => {
-    const cachedPos = _searchCache.positions[index];
+  sessionData.results.forEach((result, index) => {
+    const cachedPos = sessionData.positions[index];
     const modalId = cachedPos ? cachedPos.id : 'modal-search-' + Date.now() + '-' + index;
     
     // If it's still in DOM, don't recreate
@@ -805,21 +861,19 @@ function restoreSearchModals() {
     modal.className = 'jarvis-modal';
     modal.id = modalId;
 
-    const imageHtml = result.image_url
-      ? `<img src="${result.image_url}" alt="${result.title}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0" onerror="this.remove()">`
-      : '';
+    const encodedTitle = encodeURIComponent(result.title || sessionData.query);
+    const imageUrl = result.image_url || `https://image.pollinations.ai/prompt/${encodedTitle}?width=400&height=200&nologo=true`;
+    const imageHtml = `<img src="${imageUrl}" alt="${result.title}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0" onerror="this.style.display='none'">`;
 
-    const visualStyle = `background: ${titleToGradient(result.title || _searchCache.query)}`;
-    const letter = (result.title || _searchCache.query || 'J')[0].toUpperCase();
+    const visualStyle = `background: ${titleToGradient(result.title || sessionData.query)}`;
     const bodyHTML = result.description ? result.description.replace(/\n/g, '<br>') : '';
 
     modal.innerHTML = `
-      <div class="modal-visual" style="${visualStyle}" onclick="toggleModalExpand('${modalId}')">
+      <div class="modal-visual" style="${visualStyle}" ondblclick="toggleModalExpand('${modalId}')">
         ${imageHtml}
-        <span class="modal-visual-letter">${letter}</span>
         <div class="modal-visual-overlay"></div>
       </div>
-      <div class="modal-header" onclick="toggleModalExpand('${modalId}')">
+      <div class="modal-header" ondblclick="toggleModalExpand('${modalId}')">
         <div class="modal-title">${result.title || 'Resultado'}</div>
         <button class="modal-close" onclick="closeModal('${modalId}')">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -845,16 +899,13 @@ function restoreSearchModals() {
 }
 
 function makeDraggable(modal) {
-  const header = modal.querySelector('.modal-header');
-  if (!header) return;
-  
   let isDragging = false;
   let startX, startY, initialX, initialY;
 
-  header.addEventListener('mousedown', dragStart);
+  modal.addEventListener('mousedown', dragStart);
   
   function dragStart(e) {
-    if (e.target.closest('.modal-close')) return;
+    if (e.target.closest('.modal-close') || e.target.closest('.modal-content-area')) return;
     
     isDragging = true;
     startX = e.clientX;
