@@ -36,7 +36,7 @@ class DialogueManager:
             "Que le vaya muy bien, señor Carlos. Hasta la próxima.",
         ]
 
-    def run_interaction(self) -> None:
+    def run_interaction(self, wakeword=None) -> None:
         """Mantiene una conversación fluida hasta que el usuario deja de hablar."""
         # 1. Saludo inicial (solo la primera vez)
         print("  📢  Saludando...")
@@ -53,6 +53,7 @@ class DialogueManager:
 
         continuar_charla = True
         text_response = None
+        interrupted_context = ""
         
         while continuar_charla:
             # 2. Escuchar comando
@@ -80,11 +81,16 @@ class DialogueManager:
             except Exception:
                 pass
 
+            if interrupted_context:
+                user_text = f"{interrupted_context}\n\nNueva consulta del usuario: {user_text}"
+                interrupted_context = ""
+
             # 3. Pensar
             print(f"  🧠  Procesando: «{user_text}»")
             text_response, tool_calls = self.llm.send_message(user_text)
 
             # 4. Responder texto
+            interrumpido = False
             if text_response:
                 # PUSH TO UI: SPEAKING status and chat message
                 try:
@@ -92,11 +98,19 @@ class DialogueManager:
                     add_chat_message("Jarvis", text_response)
                 except Exception:
                     pass
-                print(f"  🗣️  Jarvis: {text_response}")
-                self.tts.speak(text_response)
+                
+                if wakeword:
+                    interrumpido = self.tts.speak(text_response, interrupt_callback=wakeword.check_wakeword_non_blocking)
+                else:
+                    self.tts.speak(text_response)
+                    
+                if interrumpido:
+                    print("  [BARGE-IN] Voz interrumpida por el usuario. Omitiendo herramientas y re-escuchando...")
+                    interrupted_context = "[Sistema: Fui interrumpido mientras hablaba. El usuario quiere complementar o corregir lo anterior.]"
+                    continue
 
             # 5. Ejecutar herramientas
-            if tool_calls:
+            if tool_calls and not interrumpido:
                 print(f"  🛠️  Ejecutando {len(tool_calls)} herramientas...")
                 for tool_call in tool_calls:
                     func_name = tool_call.name
@@ -118,7 +132,13 @@ class DialogueManager:
                                     add_chat_message("Jarvis", result_msg)
                                 except Exception:
                                     pass
-                                self.tts.speak(result_msg)
+                                if wakeword:
+                                    tool_interrupted = self.tts.speak(result_msg, interrupt_callback=wakeword.check_wakeword_non_blocking)
+                                else:
+                                    self.tts.speak(result_msg)
+                                if tool_interrupted:
+                                    interrupted_context = "[Sistema: Fui interrumpido mientras daba el resultado de la herramienta.]"
+                                    break
                         except ExitSession as e:
                             # Decir adiós y cerrar el proceso
                             exit_msg = str(e)

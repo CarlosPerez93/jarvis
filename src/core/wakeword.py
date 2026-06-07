@@ -130,6 +130,29 @@ class WakeWordDetector:
         except KeyboardInterrupt:
             return False
 
+    def check_wakeword_non_blocking(self) -> bool:
+        """Chequea si se detecta el wakeword en un solo chunk de audio (útil para interrupciones)."""
+        if not self.stream:
+            self.start_stream()
+            
+        try:
+            # Leer un solo chunk (esto bloquea por ~80ms, perfecto para el loop de pygame)
+            audio_data = self.stream.read(self.chunk_size, exception_on_overflow=False)
+            audio_array = np.frombuffer(audio_data, dtype=np.int16)
+            
+            # GANANCIA EXTREMA (x15.0) para compensar el mic Intel
+            audio_array = np.clip(audio_array.astype(np.float32) * 15.0, -32768, 32767).astype(np.int16)
+            
+            self.model.predict(audio_array)
+            for model_name, score in self.model.prediction_buffer.items():
+                if score[-1] > self.sensitivity:
+                    print(f"\n  [BARGE-IN] ¡Interrupción detectada! (Score: {score[-1]:.2f})")
+                    self.model.reset()
+                    return True
+        except Exception as e:
+            pass
+        return False
+
     def cleanup(self):
         self.stop_stream()
         if self.audio:

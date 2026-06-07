@@ -58,7 +58,7 @@ def run_jarvis():
                     wakeword.stop_stream()
 
                     # 3. Corremos la interacción
-                    dialogue_manager.run_interaction()
+                    dialogue_manager.run_interaction(wakeword=wakeword)
 
                 except Exception as e:
                     print(f"  [ERROR] Error durante la interacción: {e}")
